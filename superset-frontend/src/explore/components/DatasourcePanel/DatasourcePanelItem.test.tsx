@@ -57,7 +57,11 @@ const mockData: DatasourcePanelItemProps['data'] = {
         isCollapsed: false,
         name: 'Metrics',
         items: metrics.map(
-          m => ({ ...m, type: FoldersEditorItemType.Metric }) as MetricItem,
+          m =>
+            ({
+              ...m,
+              type: FoldersEditorItemType.Metric,
+            }) as MetricItem,
         ),
         totalItems: metrics.length,
         showingItems: metrics.length,
@@ -70,7 +74,11 @@ const mockData: DatasourcePanelItemProps['data'] = {
         isCollapsed: false,
         name: 'Columns',
         items: columns.map(
-          c => ({ ...c, type: FoldersEditorItemType.Column }) as ColumnItem,
+          c =>
+            ({
+              ...c,
+              type: FoldersEditorItemType.Column,
+            }) as ColumnItem,
         ),
         totalItems: columns.length,
         showingItems: columns.length,
@@ -107,8 +115,8 @@ test('renders each item accordingly', () => {
   expect(screen.getAllByTestId('DatasourcePanelDragOption').length).toEqual(5);
 });
 
-test('can collapse metrics and columns', () => {
+test('can collapse metrics and columns', async () => {
   setup();
-  userEvent.click(screen.getAllByRole('button')[0]);
+  await userEvent.click(screen.getAllByRole('button')[0]);
   expect(mockData.onToggleCollapse).toHaveBeenCalled();
 });

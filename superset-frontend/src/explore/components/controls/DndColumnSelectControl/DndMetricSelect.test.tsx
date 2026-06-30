@@ -241,7 +241,7 @@ test('warn selected custom metric when metric gets removed from dataset', async 
     screen.getByText('metric_b').parentElement ?? container,
   ).getByRole('button');
   expect(warningIcon).toBeInTheDocument();
-  userEvent.hover(warningIcon);
+  await userEvent.hover(warningIcon);
   const warningTooltip = await screen.findByText(
     'This metric might be incompatible with current dataset',
   );
@@ -303,7 +303,7 @@ test('warn selected custom metric when metric gets removed from dataset for sing
     screen.getByText('metric_b').parentElement ?? container,
   ).getByRole('button');
   expect(warningIcon).toBeInTheDocument();
-  userEvent.hover(warningIcon);
+  await userEvent.hover(warningIcon);
   const warningTooltip = await screen.findByText(
     'This metric might be incompatible with current dataset',
   );
