@@ -37,6 +37,25 @@ expect.extend(matchers);
 // Allow JSX tests to have React import readily available
 global.React = React;
 
+// Disable pointer-events checking in @testing-library/user-event v14.
+// v14 validates pointer-events CSS before click interactions, but many Ant Design
+// components use pointer-events: none for disabled states and overlays.
+// This preserves v12 behavior where pointer-events were not checked.
+const originalGetComputedStyle = window.getComputedStyle;
+window.getComputedStyle = (elt: Element, pseudoElt?: string | null) => {
+  const style = originalGetComputedStyle(elt, pseudoElt);
+  return new Proxy(style, {
+    get(target, prop) {
+      if (prop === 'pointerEvents') return 'auto';
+      const value = Reflect.get(target, prop);
+      if (typeof value === 'function') {
+        return value.bind(target);
+      }
+      return value;
+    },
+  });
+};
+
 // Mock ace-builds globally for tests
 jest.mock('ace-builds/src-min-noconflict/mode-handlebars', () => ({}));
 jest.mock('ace-builds/src-min-noconflict/mode-css', () => ({}));

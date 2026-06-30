@@ -114,7 +114,7 @@ describe('SqlEditorTabHeader', () => {
       const { getByTestId } = setup(defaultQueryEditor, store);
       const dropdown = getByTestId('dropdown-trigger');
 
-      userEvent.click(dropdown);
+      await userEvent.click(dropdown);
     });
 
     test('should dispatch removeQueryEditor action', async () => {
@@ -330,7 +330,7 @@ describe('SqlEditorTabHeader', () => {
       { useRedux: true, store },
     );
 
-    userEvent.click(screen.getByTestId('dropdown-trigger'));
+    await userEvent.click(screen.getByTestId('dropdown-trigger'));
     await waitFor(() =>
       expect(screen.getByTestId('rename-tab-menu-option')).toBeInTheDocument(),
     );
