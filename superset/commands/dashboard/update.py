@@ -58,7 +58,8 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
     @transaction(on_error=partial(on_error, reraise=DashboardUpdateFailedError))
     def run(self) -> Model:
         self.validate()
-        assert self._model is not None
+        if self._model is None:
+            raise DashboardNotFoundError()
         self.process_tab_diff()
         self.process_native_filter_diff()
 
@@ -250,7 +251,8 @@ class UpdateDashboardNativeFiltersCommand(UpdateDashboardCommand):
     )
     def run(self) -> Model:
         super().validate()
-        assert self._model
+        if self._model is None:
+            raise DashboardNotFoundError()
 
         configuration = DashboardDAO.update_native_filters_config(
             self._model, self._properties
@@ -267,7 +269,8 @@ class UpdateDashboardChartCustomizationsCommand(UpdateDashboardCommand):
     )
     def run(self) -> Model:
         super().validate()
-        assert self._model
+        if self._model is None:
+            raise DashboardNotFoundError()
 
         configuration = DashboardDAO.update_chart_customizations_config(
             self._model, self._properties
@@ -288,7 +291,8 @@ class UpdateDashboardColorsConfigCommand(UpdateDashboardCommand):
     )
     def run(self) -> Model:
         super().validate()
-        assert self._model
+        if self._model is None:
+            raise DashboardNotFoundError()
 
         original_changed_on = self._model.changed_on
 
