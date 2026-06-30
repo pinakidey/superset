@@ -198,7 +198,9 @@ describe('SavedQuery', () => {
     const saveDatasetMenuItem = await screen.findByLabelText(/save dataset/i);
     await userEvent.click(saveDatasetMenuItem);
 
-    const saveDatasetHeader = screen.getByText(/save or overwrite dataset/i);
+    const saveDatasetHeader = screen.getByRole('heading', {
+      name: /save or overwrite dataset/i,
+    });
 
     expect(saveDatasetHeader).toBeInTheDocument();
   });
@@ -212,7 +214,9 @@ describe('SavedQuery', () => {
     await userEvent.click(saveDatasetMenuItem);
 
     const closeBtn = screen.getByRole('button', { name: /close/i });
-    const saveDatasetHeader = screen.getByText(/save or overwrite dataset/i);
+    const saveDatasetHeader = screen.getByRole('heading', {
+      name: /save or overwrite dataset/i,
+    });
     const saveRadio = screen.getByRole('radio', {
       name: /save as new/i,
     });

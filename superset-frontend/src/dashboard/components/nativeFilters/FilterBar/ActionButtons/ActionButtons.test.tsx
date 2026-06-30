@@ -16,7 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen, userEvent } from 'spec/helpers/testing-library';
+import {
+  fireEvent,
+  render,
+  screen,
+  userEvent,
+} from 'spec/helpers/testing-library';
 import ActionButtons from './index';
 
 const createProps = () => ({
@@ -63,7 +68,8 @@ test('should render the "Apply" button as disabled', async () => {
   render(<ActionButtons {...applyDisabledProps} />, { useRedux: true });
   const applyBtn = screen.getByText('Apply filters');
   expect(applyBtn.parentElement).toBeDisabled();
-  await userEvent.click(applyBtn);
+  // Use fireEvent because v14 userEvent respects pointer-events: none on disabled buttons
+  fireEvent.click(applyBtn);
   expect(mockedProps.onApply).not.toHaveBeenCalled();
 });
 
