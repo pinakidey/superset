@@ -16,8 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { StoreEnhancer } from 'redux';
-import persistState from 'redux-localstorage';
+import persistState from 'src/utils/persistState';
 import { pickBy } from 'lodash-es';
 import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
 import { filterUnsavedQueryEditorList } from 'src/SqlLab/components/EditorAutoSync';
@@ -176,10 +175,7 @@ const sqlLabPersistStateConfig = {
   },
 };
 
-// redux-localstorage doesn't have TypeScript definitions
-// The library returns a StoreEnhancer that persists specified paths to localStorage
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const persistSqlLabStateEnhancer = (persistState as any)(
-  sqlLabPersistStateConfig.paths,
-  sqlLabPersistStateConfig.config,
-) as StoreEnhancer;
+export const persistSqlLabStateEnhancer = persistState<
+  SqlLabRootState,
+  PersistedSqlLabState
+>(sqlLabPersistStateConfig.paths, sqlLabPersistStateConfig.config);
