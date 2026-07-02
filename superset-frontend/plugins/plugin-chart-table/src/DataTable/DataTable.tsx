@@ -314,14 +314,13 @@ export default typedMemo(function DataTable<D extends object>({
         const [sortByItem] = sortBy;
         const matchingColumn = columns.find(col => col?.id === sortByItem?.id);
 
-        if (
-          matchingColumn &&
-          'columnKey' in (matchingColumn as Record<string, unknown>)
-        ) {
+        const { columnKey } = matchingColumn as ColumnDef<D, unknown> & {
+          columnKey?: string;
+        };
+        if (matchingColumn && columnKey) {
           const sortByWithColumnKey: SortByItem = {
             ...sortByItem,
-            key: (matchingColumn as Record<string, unknown>)
-              .columnKey as string,
+            key: columnKey,
           };
 
           handleSortByChange([sortByWithColumnKey]);
@@ -399,11 +398,10 @@ export default typedMemo(function DataTable<D extends object>({
               if (typeof headerDef === 'function') {
                 return flexRender(headerDef, {
                   ...header.getContext(),
-                  key: header.id,
                   onClick: header.column.getToggleSortingHandler(),
                   onDragStart,
                   onDrop,
-                });
+                } as Parameters<typeof flexRender>[1]);
               }
               return (
                 <th
@@ -428,10 +426,7 @@ export default typedMemo(function DataTable<D extends object>({
               {row.getVisibleCells().map(cell => {
                 const cellDef = cell.column.columnDef.cell;
                 if (typeof cellDef === 'function') {
-                  return flexRender(cellDef, {
-                    ...cell.getContext(),
-                    key: cell.id,
-                  });
+                  return flexRender(cellDef, cell.getContext());
                 }
                 return (
                   <td key={cell.id}>
@@ -457,10 +452,7 @@ export default typedMemo(function DataTable<D extends object>({
                 if (header.isPlaceholder) return null;
                 const footerDef = header.column.columnDef.footer;
                 if (typeof footerDef === 'function') {
-                  return flexRender(footerDef, {
-                    ...header.getContext(),
-                    key: header.id,
-                  });
+                  return flexRender(footerDef, header.getContext());
                 }
                 return <td key={header.id}>{footerDef}</td>;
               })}
@@ -625,7 +617,9 @@ export default typedMemo(function DataTable<D extends object>({
                   }
                   preGlobalFilteredRows={preGlobalFilteredRows}
                   setGlobalFilter={
-                    manualSearch ? handleSearchChange : setGlobalFilter
+                    manualSearch
+                      ? handleSearchChange
+                      : (v: string | undefined) => setGlobalFilter(v ?? '')
                   }
                   filterValue={manualSearch ? initialSearchText : filterValue}
                   id={searchInputId}
