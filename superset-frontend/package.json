@@ -126,7 +126,7 @@
     "@luma.gl/gltf": "~9.2.5",
     "@luma.gl/shadertools": "~9.2.5",
     "@luma.gl/webgl": "~9.2.5",
-    "@reduxjs/toolkit": "^1.9.3",
+    "@reduxjs/toolkit": "^2.5.0",
     "@rjsf/antd": "^5.24.13",
     "@rjsf/core": "^5.24.13",
     "@rjsf/utils": "^5.24.3",
@@ -214,7 +214,7 @@
     "react-json-tree": "^0.20.0",
     "react-lines-ellipsis": "^0.16.1",
     "react-loadable": "^5.5.0",
-    "react-redux": "^7.2.9",
+    "react-redux": "^9.2.0",
     "react-resize-detector": "^9.1.1",
     "react-reverse-portal": "^2.3.0",
     "react-router-dom": "^5.3.4",
@@ -224,9 +224,9 @@
     "react-transition-group": "^4.4.5",
     "react-virtualized-auto-sizer": "^1.0.26",
     "react-window": "^1.8.10",
-    "redux": "^4.2.1",
+    "redux": "^5.0.1",
     "redux-localstorage": "^0.4.1",
-    "redux-thunk": "^2.1.0",
+    "redux-thunk": "^3.1.0",
     "redux-undo": "^1.0.0-beta9-9-7",
     "rison": "^0.1.1",
     "scroll-into-view-if-needed": "^3.1.0",
@@ -288,7 +288,6 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@types/react-loadable": "^5.5.11",
-    "@types/react-redux": "^7.1.10",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-transition-group": "^4.4.12",
     "@types/react-window": "^1.8.8",
@@ -428,6 +427,9 @@
     },
     "eslint-plugin-jest-dom": {
       "eslint": "$eslint"
+    },
+    "@types/redux-mock-store": {
+      "redux": "$redux"
     }
   },
   "readme": "ERROR: No README data found!",
