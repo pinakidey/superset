@@ -18,7 +18,7 @@
  */
 /* eslint-disable camelcase */
 import { DataMaskStateWithId, JsonObject } from '@superset-ui/core';
-import type { AnyAction } from 'redux';
+import type { UnknownAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { History } from 'history';
@@ -71,7 +71,7 @@ import {
 } from '../types';
 
 export const HYDRATE_DASHBOARD = 'HYDRATE_DASHBOARD';
-type AppDispatch = ThunkDispatch<RootState, undefined, AnyAction>;
+type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction>;
 
 interface HydrateChartData {
   slice_id: number;
@@ -109,7 +109,7 @@ export const hydrateDashboard =
     activeTabs,
     chartStates,
   }: HydrateDashboardParams) =>
-  (dispatch: AppDispatch, getState: GetState): AnyAction => {
+  (dispatch: AppDispatch, getState: GetState): UnknownAction => {
     const { user, common, dashboardState } = getState();
     const { metadata, position_data: positionData } = dashboard;
     const regularUrlParams = extractUrlParams('regular');

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { AnyAction } from 'redux';
+import type { UnknownAction } from 'redux';
 // eslint-disable-next-line import/named
 import {
   ActionCreators as UndoActionCreators,
@@ -78,7 +78,7 @@ const makeHistory = (
   future: DashboardLayout[] = [],
 ): StateWithHistory<DashboardLayout> => ({ past, present, future });
 
-const hydrate = (present: DashboardLayout): AnyAction => ({
+const hydrate = (present: DashboardLayout): UnknownAction => ({
   type: HYDRATE_DASHBOARD,
   data: { dashboardLayout: { present } },
 });
@@ -99,7 +99,7 @@ test('a layout edit is applied through the wrapped reducer', () => {
     hydrate(makeValidLayout()),
   );
 
-  const update: AnyAction = {
+  const update: UnknownAction = {
     type: UPDATE_COMPONENTS,
     payload: {
       nextComponents: {

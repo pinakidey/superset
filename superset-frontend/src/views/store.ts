@@ -21,14 +21,15 @@ import {
   ConfigureStoreOptions,
   createListenerMiddleware,
   StoreEnhancer,
+  Tuple,
 } from '@reduxjs/toolkit';
-import type { AnyAction } from 'redux';
+import type { UnknownAction } from 'redux';
 import {
   useDispatch,
   useSelector,
   type TypedUseSelectorHook,
 } from 'react-redux';
-import thunk, { type ThunkDispatch } from 'redux-thunk';
+import { thunk, type ThunkDispatch } from 'redux-thunk';
 import { api } from 'src/hooks/apiResources/queryApi';
 import messageToastReducer from 'src/components/MessageToasts/reducers';
 import charts from 'src/components/Chart/chartReducer';
@@ -107,7 +108,7 @@ const getMiddleware: ConfigureStoreOptions['middleware'] =
             warnAfter: 200,
           },
         }).concat(listenerMiddleware.middleware, logger, api.middleware)
-      : [listenerMiddleware.middleware, thunk, logger, api.middleware];
+      : new Tuple(listenerMiddleware.middleware, thunk, logger, api.middleware);
 
 // TODO: This reducer is a combination of the Dashboard and Explore reducers.
 // The correct way of handling this is to unify the actions and reducers from both
@@ -193,10 +194,10 @@ export type RootState = ReturnType<typeof store.getState>;
 // AppDispatch is declared as ThunkDispatch & store.dispatch rather than
 // `typeof store.dispatch` because Superset annotates getMiddleware as
 // ConfigureStoreOptions['middleware'], which erases the middleware tuple type
-// and leaves store.dispatch typed as Dispatch<AnyAction>. The intersection
+// and leaves store.dispatch typed as Dispatch<UnknownAction>. The intersection
 // restores thunk support without requiring a wider refactor of the middleware
 // setup.
-export type AppDispatch = ThunkDispatch<RootState, undefined, AnyAction> &
+export type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction> &
   typeof store.dispatch;
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

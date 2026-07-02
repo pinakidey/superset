@@ -18,7 +18,7 @@
  */
 import { ActionCreators as UndoActionCreators } from 'redux-undo';
 import { t } from '@apache-superset/core/translation';
-import type { AnyAction } from 'redux';
+import type { UnknownAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 import { addWarningToast } from 'src/components/MessageToasts/actions';
 import { TABS_TYPE, ROW_TYPE } from 'src/dashboard/util/componentTypes';
@@ -35,7 +35,7 @@ import { GetState, LayoutItem, RootState } from '../types';
 import { updateLayoutComponents } from './dashboardFilters';
 import { setUnsavedChanges } from './dashboardState';
 
-type AppDispatch = ThunkDispatch<RootState, undefined, AnyAction>;
+type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction>;
 
 // Component CRUD -------------------------------------------------------------
 export const UPDATE_COMPONENTS = 'UPDATE_COMPONENTS';
@@ -263,7 +263,7 @@ export function handleComponentDrop(dropResult: DropResult) {
   return (
     dispatch: AppDispatch,
     getState: GetState,
-  ): null | AnyAction | void => {
+  ): null | UnknownAction | void => {
     const overflowsParent = dropOverflowsParent(
       dropResult,
       getState().dashboardLayout.present,
@@ -364,7 +364,7 @@ export function handleComponentDrop(dropResult: DropResult) {
   };
 }
 
-export const clearDashboardHistory = (): AnyAction =>
+export const clearDashboardHistory = (): UnknownAction =>
   UndoActionCreators.clearHistory();
 
 // Undo redo ------------------------------------------------------------------

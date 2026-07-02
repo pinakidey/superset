@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { AnyAction } from 'redux';
+import type { UnknownAction } from 'redux';
 import { SupersetClient } from '@superset-ui/core';
 import { defaultState } from 'src/explore/store';
 import exploreReducer, {
@@ -86,14 +86,14 @@ describe('reducers', () => {
   test('Does not set a control value if control does not exist', () => {
     const newState = exploreReducer(
       defaultState as unknown as ExploreState,
-      actions.setControlValue('NEW_FIELD', 'x', []) as AnyAction,
+      actions.setControlValue('NEW_FIELD', 'x', []) as UnknownAction,
     );
     expect(newState.controls.NEW_FIELD).toBeUndefined();
   });
   test('setControlValue works as expected with a Select control', () => {
     const newState = exploreReducer(
       defaultState as unknown as ExploreState,
-      actions.setControlValue('y_axis_format', '$,.2f', []) as AnyAction,
+      actions.setControlValue('y_axis_format', '$,.2f', []) as UnknownAction,
     );
     expect(newState.controls.y_axis_format.value).toBe('$,.2f');
     expect(newState.form_data.y_axis_format).toBe('$,.2f');
@@ -136,7 +136,7 @@ describe('reducers', () => {
     const swappedMetrics = [METRICS[1], METRICS[0]];
     const newState = exploreReducer(
       mockedState as unknown as ExploreState,
-      actions.setControlValue('metrics', swappedMetrics, []) as AnyAction,
+      actions.setControlValue('metrics', swappedMetrics, []) as UnknownAction,
     );
 
     const expectedColumnConfig = {
@@ -204,7 +204,7 @@ describe('reducers', () => {
 
     const newState = exploreReducer(
       mockedState as unknown as ExploreState,
-      actions.setControlValue('metrics', updatedMetrics, []) as AnyAction,
+      actions.setControlValue('metrics', updatedMetrics, []) as UnknownAction,
     );
 
     const expectedColumnConfig = {
@@ -225,7 +225,7 @@ describe('reducers', () => {
   test('setStashFormData works as expected with fieldNames', () => {
     const newState = exploreReducer(
       defaultState as unknown as ExploreState,
-      actions.setStashFormData(true, ['y_axis_format']) as AnyAction,
+      actions.setStashFormData(true, ['y_axis_format']) as UnknownAction,
     );
     expect(newState.hiddenFormData).toEqual({
       y_axis_format: defaultState.form_data.y_axis_format,
@@ -233,7 +233,7 @@ describe('reducers', () => {
     expect(newState.form_data.y_axis_format).toBeFalsy();
     const updatedState = exploreReducer(
       newState,
-      actions.setStashFormData(false, ['y_axis_format']) as AnyAction,
+      actions.setStashFormData(false, ['y_axis_format']) as UnknownAction,
     );
     expect(updatedState.hiddenFormData!.y_axis_format).toBeFalsy();
     expect(updatedState.form_data.y_axis_format).toEqual(
@@ -323,9 +323,9 @@ test('fetchCompatibility ignores stale async responses', async () => {
 
   const compatibilityActions = dispatch.mock.calls
     .map(call => call[0])
-    .filter((action: AnyAction) => action.type === actions.SET_COMPATIBILITY);
+    .filter((action: UnknownAction) => action.type === actions.SET_COMPATIBILITY);
   const successfulActions = compatibilityActions.filter(
-    (action: AnyAction) => action.compatibilityLoading === false,
+    (action: UnknownAction) => action.compatibilityLoading === false,
   );
 
   expect(successfulActions).toContainEqual(

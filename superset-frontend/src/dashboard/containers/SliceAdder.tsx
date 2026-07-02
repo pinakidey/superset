@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { bindActionCreators, Dispatch, AnyAction } from 'redux';
+import { bindActionCreators, Dispatch, UnknownAction } from 'redux';
 import { connect } from 'react-redux';
 import { fetchSlices, updateSlices } from '../actions/sliceEntities';
 import SliceAdder from '../components/SliceAdder';
@@ -43,7 +43,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<AnyAction>) {
+function mapDispatchToProps(dispatch: Dispatch<UnknownAction>) {
   return bindActionCreators(
     {
       fetchSlices,

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { AnyAction, Reducer } from 'redux';
+import { UnknownAction, Reducer } from 'redux';
 // eslint-disable-next-line import/named
 import undoable, {
   ActionCreators as UndoActionCreators,
@@ -89,9 +89,9 @@ const TRACKED_ACTIONS: string[] = [
  */
 
 // Wrapper reducer that filters actions before they reach the dashboardLayout reducer
-const layoutOnlyReducer: Reducer<DashboardLayout, AnyAction> = (
+const layoutOnlyReducer: Reducer<DashboardLayout, UnknownAction> = (
   state: DashboardLayout | undefined,
-  action: AnyAction,
+  action: UnknownAction,
 ): DashboardLayout => {
   // Only allow layout-related actions to reach the dashboardLayout reducer
   if (!TRACKED_ACTIONS.includes(action.type)) return state || {};
@@ -102,7 +102,7 @@ const layoutOnlyReducer: Reducer<DashboardLayout, AnyAction> = (
 
 const baseUndoableReducer: Reducer<
   StateWithHistory<DashboardLayout>,
-  AnyAction
+  UnknownAction
 > = undoable(layoutOnlyReducer, {
   // +1 because length of history seems max out at limit - 1
   // +1 again so we can detect if we've exceeded the limit
@@ -138,7 +138,7 @@ const isValidLayout = (layout?: DashboardLayout): boolean =>
  *    it (e.g. undoLayoutAction) don't misread an emptied stack as a clean,
  *    fully-reverted dashboard and silently drop the unsaved-changes guard.
  */
-const undoableReducer: Reducer<StateWithHistory<DashboardLayout>, AnyAction> = (
+const undoableReducer: Reducer<StateWithHistory<DashboardLayout>, UnknownAction> = (
   state,
   action,
 ) => {

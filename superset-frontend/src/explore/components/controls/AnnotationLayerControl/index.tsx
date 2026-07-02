@@ -35,7 +35,7 @@ import { getChartKey } from 'src/explore/exploreUtils';
 import { runAnnotationQuery } from 'src/components/Chart/chartAction';
 import CustomListItem from 'src/explore/components/controls/CustomListItem';
 import { ChartState, ExplorePageState } from 'src/explore/types';
-import { AnyAction } from 'redux';
+import { UnknownAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { Icons } from '@superset-ui/core/components/Icons';
 import ControlPopover, {
@@ -302,7 +302,7 @@ function mapStateToProps({
 }
 
 function mapDispatchToProps(
-  dispatch: ThunkDispatch<any, undefined, AnyAction>,
+  dispatch: ThunkDispatch<any, undefined, UnknownAction>,
 ) {
   return {
     // Note: There's a type mismatch between the local Annotation interface

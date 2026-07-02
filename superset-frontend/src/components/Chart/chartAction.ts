@@ -53,7 +53,7 @@ import { updateDataMask } from 'src/dataMask/actions';
 import { waitForAsyncData } from 'src/middleware/asyncEvent';
 import { safeStringify } from 'src/utils/safeStringify';
 import { extendedDayjs } from '@superset-ui/core/utils/dates';
-import type { Dispatch, Action, AnyAction } from 'redux';
+import type { Dispatch, Action, UnknownAction } from 'redux';
 import type { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import type { History } from 'history';
 import type { ChartState } from 'src/explore/types';
@@ -233,12 +233,12 @@ export type ChartAction =
   | AddChartAction;
 
 // Type for thunk actions
-export type ChartThunkDispatch = ThunkDispatch<RootState, undefined, AnyAction>;
+export type ChartThunkDispatch = ThunkDispatch<RootState, undefined, UnknownAction>;
 export type ChartThunkAction<R = void> = ThunkAction<
   R,
   RootState,
   undefined,
-  AnyAction
+  UnknownAction
 >;
 
 // Request params interface

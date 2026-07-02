@@ -19,7 +19,7 @@
 
 import { SupersetClient, makeApi } from '@superset-ui/core';
 import { ThunkDispatch } from 'redux-thunk';
-import { AnyAction } from 'redux';
+import { UnknownAction } from 'redux';
 import { QueryExecutePayload, QueryExecuteResponse } from './types';
 
 export const executeQueryApi = makeApi<
@@ -61,7 +61,7 @@ export function setQueryError(error: string) {
   };
 }
 export function executeQuery(payload: QueryExecutePayload) {
-  return async function (dispatch: ThunkDispatch<any, undefined, AnyAction>) {
+  return async function (dispatch: ThunkDispatch<any, undefined, UnknownAction>) {
     try {
       dispatch(setQueryIsLoading(true));
       const result = await executeQueryApi(payload);
@@ -75,7 +75,7 @@ export function executeQuery(payload: QueryExecutePayload) {
 }
 
 export function formatQuery(sql: string, options?: { signal?: AbortSignal }) {
-  return function (dispatch: ThunkDispatch<any, undefined, AnyAction>) {
+  return function (dispatch: ThunkDispatch<any, undefined, UnknownAction>) {
     return SupersetClient.post({
       endpoint: `/api/v1/sqllab/format_sql/`,
       body: JSON.stringify({ sql }),

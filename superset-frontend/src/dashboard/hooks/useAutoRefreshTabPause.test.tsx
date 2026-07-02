@@ -18,7 +18,7 @@
  */
 import { renderHook, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { createStore, AnyAction } from 'redux';
+import { createStore, UnknownAction } from 'redux';
 import { ReactNode } from 'react';
 import { useAutoRefreshTabPause } from './useAutoRefreshTabPause';
 import {
@@ -42,7 +42,7 @@ const createMockStore = (overrides = {}) => {
 
   const reducer = (
     state = initialState,
-    action: AnyAction,
+    action: UnknownAction,
   ): typeof initialState => {
     switch (action.type) {
       case SET_AUTO_REFRESH_PAUSED_BY_TAB:

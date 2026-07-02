@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Dispatch, AnyAction } from 'redux';
+import { Dispatch, UnknownAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { Dataset } from '@superset-ui/chart-controls';
 import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
@@ -63,7 +63,7 @@ export function saveDataset({
   datasourceName,
   columns,
 }: Omit<SaveDatasetRequest['data'], 'dbId'> & { database: { id: number } }) {
-  return async function (dispatch: ThunkDispatch<any, undefined, AnyAction>) {
+  return async function (dispatch: ThunkDispatch<any, undefined, UnknownAction>) {
     // Create a dataset object
     try {
       const {
