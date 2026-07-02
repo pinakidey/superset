@@ -50,7 +50,7 @@ import type {
 } from 'src/SqlLab/types';
 import type { DatabaseObject } from 'src/features/databases/types';
 import { debounce, isEmpty } from 'lodash-es';
-import Mousetrap from 'mousetrap';
+import useKeyboardShortcuts from 'src/hooks/useKeyboardShortcuts';
 import {
   Button,
   Divider,
@@ -626,17 +626,7 @@ const SqlEditor: FC<Props> = ({
     // TODO: Remove useEffectEvent deps once https://github.com/facebook/react/pull/25881 is released
   }, [onBeforeUnload, loadQueryEditor, isActive]);
 
-  useEffect(() => {
-    // setup hotkeys
-    const hotkeys = getHotkeyConfig();
-    if (isActive) {
-      // MouseTrap always override the same key
-      // Unbind (reset) will be called when App component unmount
-      hotkeys.forEach(keyConfig => {
-        Mousetrap.bind([keyConfig.key], keyConfig.func);
-      });
-    }
-  }, [getHotkeyConfig, latestQuery, isActive]);
+  useKeyboardShortcuts(getHotkeyConfig(), isActive);
 
   const onResizeStart = () => {
     // Set the heights on the ace editor and the ace content area after drag starts

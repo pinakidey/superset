@@ -18,7 +18,6 @@
  */
 import { isValidElement } from 'react';
 import { AnyAction, combineReducers } from 'redux';
-import Mousetrap from 'mousetrap';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { render } from 'spec/helpers/testing-library';
@@ -40,10 +39,6 @@ jest.mock('src/SqlLab/components/PopEditorTab', () => () => (
 jest.mock('src/SqlLab/components/QueryAutoRefresh', () => () => (
   <div data-test="mock-query-auto-refresh" />
 ));
-jest.mock('mousetrap', () => ({
-  reset: jest.fn(),
-}));
-
 const sqlLabReducer = combineReducers({
   localStorageUsageInKilobytes: reducers.localStorageUsageInKilobytes,
 });
@@ -71,12 +66,6 @@ describe('SqlLab App', () => {
     const { getByTestId } = render(<App />, { useRedux: true, store });
     expect(getByTestId('SqlLabApp')).toBeInTheDocument();
     expect(getByTestId('mock-pop-editor-tab')).toBeInTheDocument();
-  });
-
-  test('reset hotkey events on unmount', () => {
-    const { unmount } = render(<App />, { useRedux: true, store });
-    unmount();
-    expect(Mousetrap.reset).toHaveBeenCalled();
   });
 
   test('logs current usage warning', () => {
