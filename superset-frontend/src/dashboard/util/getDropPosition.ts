@@ -118,8 +118,7 @@ export default function getDropPosition(
   }
 
   const refBoundingRect = Component.ref?.getBoundingClientRect();
-  const resolvedOffset =
-    clientOffset || CACHED_CLIENT_OFFSET[component.id];
+  const resolvedOffset = clientOffset || CACHED_CLIENT_OFFSET[component.id];
 
   if (!resolvedOffset || !refBoundingRect) {
     return null;

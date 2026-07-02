@@ -333,17 +333,13 @@ export const DragDroppable = memo(function DragDroppable(
 /**
  * Draggable — only drag source, no drop target.
  */
-export const Draggable = memo(function Draggable(
-  props: DragDroppableOwnProps,
-) {
+export const Draggable = memo(function Draggable(props: DragDroppableOwnProps) {
   return <DragDroppableInner {...props} mode="drag-only" />;
 });
 
 /**
  * Droppable — only drop target, no drag source.
  */
-export const Droppable = memo(function Droppable(
-  props: DragDroppableOwnProps,
-) {
+export const Droppable = memo(function Droppable(props: DragDroppableOwnProps) {
   return <DragDroppableInner {...props} mode="drop-only" />;
 });

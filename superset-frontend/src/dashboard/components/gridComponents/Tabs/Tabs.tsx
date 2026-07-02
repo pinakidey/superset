@@ -531,9 +531,9 @@ const Tabs = (props: TabsProps): ReactElement => {
 
   const renderChild = useCallback(
     ({
-        dragSourceRef: tabsDragSourceRef,
-        dragListeners: tabsDragListeners,
-      }: DraggableChildProps) => (
+      dragSourceRef: tabsDragSourceRef,
+      dragListeners: tabsDragListeners,
+    }: DraggableChildProps) => (
       <TabsRenderer
         tabItems={tabItems}
         editMode={editMode}

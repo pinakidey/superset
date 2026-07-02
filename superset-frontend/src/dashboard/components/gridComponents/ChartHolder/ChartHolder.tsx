@@ -243,12 +243,12 @@ const ChartHolder = ({
 
   const renderChild = useCallback(
     ({
-        dragSourceRef,
-        dragListeners,
-      }: {
-        dragSourceRef?: (node: HTMLElement | null) => void;
-        dragListeners?: HTMLAttributes<HTMLElement>;
-      }) => (
+      dragSourceRef,
+      dragListeners,
+    }: {
+      dragSourceRef?: (node: HTMLElement | null) => void;
+      dragListeners?: HTMLAttributes<HTMLElement>;
+    }) => (
       <ResizableContainer
         id={component.id}
         adjustableWidth={parentComponent.type === ROW_TYPE}
