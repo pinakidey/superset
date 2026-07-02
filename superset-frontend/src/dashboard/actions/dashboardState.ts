@@ -92,7 +92,11 @@ import type { DashboardState, GetState, RootState, Slice } from '../types';
 // dispatching thunks from other modules (e.g. chart actions) whose RootState
 // type differs from the dashboard RootState. At runtime the Redux store
 // satisfies all module state shapes.
-interface AppDispatch extends ThunkDispatch<RootState, undefined, UnknownAction> {
+interface AppDispatch extends ThunkDispatch<
+  RootState,
+  undefined,
+  UnknownAction
+> {
   <R>(asyncAction: (...args: never[]) => R): R;
 }
 
@@ -922,7 +926,10 @@ export function showBuilderPane(): ShowBuilderPaneAction {
 
 export function addSliceToDashboard(
   id: number,
-): (dispatch: AppDispatch, getState: GetState) => Promise<void> | UnknownAction {
+): (
+  dispatch: AppDispatch,
+  getState: GetState,
+) => Promise<void> | UnknownAction {
   return (dispatch: AppDispatch, getState: GetState) => {
     const { sliceEntities } = getState();
     const selectedSlice = sliceEntities.slices[id];

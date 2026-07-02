@@ -138,10 +138,10 @@ const isValidLayout = (layout?: DashboardLayout): boolean =>
  *    it (e.g. undoLayoutAction) don't misread an emptied stack as a clean,
  *    fully-reverted dashboard and silently drop the unsaved-changes guard.
  */
-const undoableReducer: Reducer<StateWithHistory<DashboardLayout>, UnknownAction> = (
-  state,
-  action,
-) => {
+const undoableReducer: Reducer<
+  StateWithHistory<DashboardLayout>,
+  UnknownAction
+> = (state, action) => {
   const nextState = baseUndoableReducer(state, action);
 
   if (action.type === HYDRATE_DASHBOARD) {

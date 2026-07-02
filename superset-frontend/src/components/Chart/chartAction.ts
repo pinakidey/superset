@@ -233,7 +233,11 @@ export type ChartAction =
   | AddChartAction;
 
 // Type for thunk actions
-export type ChartThunkDispatch = ThunkDispatch<RootState, undefined, UnknownAction>;
+export type ChartThunkDispatch = ThunkDispatch<
+  RootState,
+  undefined,
+  UnknownAction
+>;
 export type ChartThunkAction<R = void> = ThunkAction<
   R,
   RootState,

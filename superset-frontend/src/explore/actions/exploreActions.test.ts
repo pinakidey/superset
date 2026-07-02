@@ -323,7 +323,9 @@ test('fetchCompatibility ignores stale async responses', async () => {
 
   const compatibilityActions = dispatch.mock.calls
     .map(call => call[0])
-    .filter((action: UnknownAction) => action.type === actions.SET_COMPATIBILITY);
+    .filter(
+      (action: UnknownAction) => action.type === actions.SET_COMPATIBILITY,
+    );
   const successfulActions = compatibilityActions.filter(
     (action: UnknownAction) => action.compatibilityLoading === false,
   );

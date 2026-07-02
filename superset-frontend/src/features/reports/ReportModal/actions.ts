@@ -104,7 +104,9 @@ export function fetchUISpecificReport({
       },
     ],
   });
-  return function fetchUISpecificReportThunk(dispatch: Dispatch<UnknownAction>) {
+  return function fetchUISpecificReportThunk(
+    dispatch: Dispatch<UnknownAction>,
+  ) {
     return SupersetClient.get({
       endpoint: `/api/v1/report/?q=${queryParams}`,
     })
