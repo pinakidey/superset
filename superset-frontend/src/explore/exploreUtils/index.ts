@@ -193,7 +193,7 @@ export function getChartDataUri({
   qs,
   allowDomainSharding = false,
 }: ChartDataUriParams): string {
-  const protocol = window.location.protocol;
+  const { protocol } = window.location;
   const hostname = getHostName(allowDomainSharding);
   const port = window.location.port ? `:${window.location.port}` : '';
   const basePath = ensureAppRoot(path);
@@ -231,7 +231,7 @@ export function getExploreUrl({
   // Determine origin prefix for absolute URLs
   let origin = '';
   if (!relative && !curUrl) {
-    const protocol = window.location.protocol;
+    const { protocol } = window.location;
     const hostname = getHostName(allowDomainSharding);
     const port = window.location.port ? `:${window.location.port}` : '';
     origin = `${protocol}//${hostname}${port}`;
