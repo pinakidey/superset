@@ -427,6 +427,9 @@
     },
     "eslint-plugin-jest-dom": {
       "eslint": "$eslint"
+    },
+    "@types/redux-mock-store": {
+      "redux": "$redux"
     }
   },
   "readme": "ERROR: No README data found!",

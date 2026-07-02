@@ -18,7 +18,7 @@
  */
 import { nanoid } from 'nanoid';
 import rison from 'rison';
-import type { UnknownAction } from 'redux';
+import type { AnyAction } from 'redux';
 import type { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import type { QueryColumn, SupersetError } from '@superset-ui/core';
 import {
@@ -234,17 +234,17 @@ export interface SqlLabAction {
   newQuery?: { id: string };
 }
 
-// Use UnknownAction for ThunkAction/ThunkDispatch to maintain compatibility with
+// Use AnyAction for ThunkAction/ThunkDispatch to maintain compatibility with
 // redux-mock-store and standard Redux patterns. SqlLabAction is used for plain
 // action creator return types where the shape is known.
 type SqlLabThunkAction<R = void> = ThunkAction<
   R,
   SqlLabRootState,
   undefined,
-  UnknownAction
+  AnyAction
 >;
 
-type AppDispatch = ThunkDispatch<SqlLabRootState, undefined, UnknownAction>;
+type AppDispatch = ThunkDispatch<SqlLabRootState, undefined, AnyAction>;
 type GetState = () => SqlLabRootState;
 
 export const addInfoToast = addInfoToastAction;

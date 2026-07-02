@@ -17,7 +17,7 @@
  * under the License.
  */
 import { isValidElement } from 'react';
-import { UnknownAction, combineReducers } from 'redux';
+import { AnyAction, combineReducers } from 'redux';
 import Mousetrap from 'mousetrap';
 import configureStore from 'redux-mock-store';
 import { thunk } from 'redux-thunk';
@@ -47,7 +47,7 @@ jest.mock('mousetrap', () => ({
 const sqlLabReducer = combineReducers({
   localStorageUsageInKilobytes: reducers.localStorageUsageInKilobytes,
 });
-const mockAction = {} as UnknownAction;
+const mockAction = {} as AnyAction;
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('SqlLab App', () => {

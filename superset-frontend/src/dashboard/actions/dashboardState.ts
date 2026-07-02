@@ -60,7 +60,7 @@ import { logEvent } from 'src/logger/actions';
 import { LOG_ACTIONS_CONFIRM_OVERWRITE_DASHBOARD_METADATA } from 'src/logger/LogUtils';
 import { isEqual } from 'lodash-es';
 import { navigateWithState, navigateTo } from 'src/utils/navigationUtils';
-import type { UnknownAction } from 'redux';
+import type { AnyAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 import { ResourceStatus } from 'src/hooks/apiResources/apiResources';
 import type { AgGridChartState } from '@superset-ui/core';
@@ -92,11 +92,7 @@ import type { DashboardState, GetState, RootState, Slice } from '../types';
 // dispatching thunks from other modules (e.g. chart actions) whose RootState
 // type differs from the dashboard RootState. At runtime the Redux store
 // satisfies all module state shapes.
-interface AppDispatch extends ThunkDispatch<
-  RootState,
-  undefined,
-  UnknownAction
-> {
+interface AppDispatch extends ThunkDispatch<RootState, undefined, AnyAction> {
   <R>(asyncAction: (...args: never[]) => R): R;
 }
 
@@ -926,10 +922,7 @@ export function showBuilderPane(): ShowBuilderPaneAction {
 
 export function addSliceToDashboard(
   id: number,
-): (
-  dispatch: AppDispatch,
-  getState: GetState,
-) => Promise<void> | UnknownAction {
+): (dispatch: AppDispatch, getState: GetState) => Promise<void> | AnyAction {
   return (dispatch: AppDispatch, getState: GetState) => {
     const { sliceEntities } = getState();
     const selectedSlice = sliceEntities.slices[id];
@@ -1225,7 +1218,7 @@ export function setMaxUndoHistoryExceeded(
 export function maxUndoHistoryToast(): (
   dispatch: AppDispatch,
   getState: GetState,
-) => UnknownAction {
+) => AnyAction {
   return (dispatch: AppDispatch, getState: GetState) => {
     const { dashboardLayout } = getState();
     const historyLength = dashboardLayout.past.length;

@@ -25,7 +25,7 @@ import {
   addSuccessToast,
 } from 'src/components/MessageToasts/actions';
 import { isEmpty } from 'lodash-es';
-import { Dispatch, UnknownAction } from 'redux';
+import { Dispatch, AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { ReportObject, ReportCreationMethod } from 'src/features/reports/types';
 import { DashboardInfo, ChartsState } from 'src/dashboard/types';
@@ -104,9 +104,7 @@ export function fetchUISpecificReport({
       },
     ],
   });
-  return function fetchUISpecificReportThunk(
-    dispatch: Dispatch<UnknownAction>,
-  ) {
+  return function fetchUISpecificReportThunk(dispatch: Dispatch<AnyAction>) {
     return SupersetClient.get({
       endpoint: `/api/v1/report/?q=${queryParams}`,
     })
@@ -127,7 +125,7 @@ export function fetchUISpecificReport({
 }
 
 const structureFetchAction = (
-  dispatch: ThunkDispatch<ReportRootState, unknown, UnknownAction>,
+  dispatch: ThunkDispatch<ReportRootState, unknown, AnyAction>,
   getState: () => ReportRootState,
 ) => {
   const state = getState();
@@ -162,7 +160,7 @@ export interface AddReportAction {
 }
 
 export const addReport =
-  (report: Partial<ReportObject>) => (dispatch: Dispatch<UnknownAction>) =>
+  (report: Partial<ReportObject>) => (dispatch: Dispatch<AnyAction>) =>
     SupersetClient.post({
       endpoint: `/api/v1/report/`,
       jsonPayload: report,
@@ -184,7 +182,7 @@ export interface SubscribeReportAction {
 }
 
 export const subscribeReport =
-  (report: Partial<ReportObject>) => (dispatch: Dispatch<UnknownAction>) =>
+  (report: Partial<ReportObject>) => (dispatch: Dispatch<AnyAction>) =>
     SupersetClient.post({
       endpoint: `/api/v1/report/subscribe`,
       jsonPayload: report,
@@ -207,7 +205,7 @@ export interface EditReportAction {
 
 export const editReport =
   (id: number, report: Partial<ReportObject>) =>
-  (dispatch: Dispatch<UnknownAction>) =>
+  (dispatch: Dispatch<AnyAction>) =>
     SupersetClient.put({
       endpoint: `/api/v1/report/${id}`,
       jsonPayload: report,
@@ -223,7 +221,7 @@ export const editReport =
 
 export function toggleActive(report: ReportObject, isActive: boolean) {
   return function toggleActiveThunk(
-    dispatch: ThunkDispatch<ReportRootState, unknown, UnknownAction>,
+    dispatch: ThunkDispatch<ReportRootState, unknown, AnyAction>,
   ) {
     return SupersetClient.put({
       endpoint: encodeURI(`/api/v1/report/${report.id}`),
@@ -262,7 +260,7 @@ export interface DeleteReportAction {
 }
 
 export function deleteActiveReport(report: DeletableReport) {
-  return function deleteActiveReportThunk(dispatch: Dispatch<UnknownAction>) {
+  return function deleteActiveReportThunk(dispatch: Dispatch<AnyAction>) {
     return SupersetClient.delete({
       endpoint: encodeURI(`/api/v1/report/${report.id}`),
     })

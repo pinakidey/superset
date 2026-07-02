@@ -23,7 +23,7 @@ import {
   StoreEnhancer,
   Tuple,
 } from '@reduxjs/toolkit';
-import type { UnknownAction } from 'redux';
+import type { AnyAction } from 'redux';
 import {
   useDispatch,
   useSelector,
@@ -177,7 +177,8 @@ export function setupStore({
     },
     middleware: getMiddleware,
     devTools: process.env.WEBPACK_MODE === 'development' && !disableDebugger,
-    enhancers: [persistSqlLabStateEnhancer as StoreEnhancer],
+    enhancers: getDefaultEnhancers =>
+      getDefaultEnhancers().concat(persistSqlLabStateEnhancer as StoreEnhancer),
     ...overrides,
   });
 }
@@ -194,10 +195,10 @@ export type RootState = ReturnType<typeof store.getState>;
 // AppDispatch is declared as ThunkDispatch & store.dispatch rather than
 // `typeof store.dispatch` because Superset annotates getMiddleware as
 // ConfigureStoreOptions['middleware'], which erases the middleware tuple type
-// and leaves store.dispatch typed as Dispatch<UnknownAction>. The intersection
+// and leaves store.dispatch typed as Dispatch<AnyAction>. The intersection
 // restores thunk support without requiring a wider refactor of the middleware
 // setup.
-export type AppDispatch = ThunkDispatch<RootState, undefined, UnknownAction> &
+export type AppDispatch = ThunkDispatch<RootState, undefined, AnyAction> &
   typeof store.dispatch;
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

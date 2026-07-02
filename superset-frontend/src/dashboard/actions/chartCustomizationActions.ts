@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { UnknownAction } from 'redux';
+import { AnyAction } from 'redux';
 import { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import { t } from '@apache-superset/core/translation';
 import {
@@ -75,10 +75,10 @@ export function saveChartCustomization(
   Promise<{ result: Partial<DashboardInfo>; last_modified_time: number }>,
   RootState,
   null,
-  UnknownAction
+  AnyAction
 > {
   return async function (
-    dispatch: ThunkDispatch<RootState, null, UnknownAction>,
+    dispatch: ThunkDispatch<RootState, null, AnyAction>,
     getState: () => RootState,
   ) {
     const { id, metadata } = getState().dashboardInfo;
@@ -225,8 +225,8 @@ export function loadChartCustomizationData(
   itemId: string,
   datasetId: string,
   columnName: string | string[],
-): ThunkAction<Promise<void>, RootState, null, UnknownAction> {
-  return async (dispatch: ThunkDispatch<RootState, null, UnknownAction>) => {
+): ThunkAction<Promise<void>, RootState, null, AnyAction> {
+  return async (dispatch: ThunkDispatch<RootState, null, AnyAction>) => {
     if (!datasetId || !columnName) {
       return;
     }
@@ -308,9 +308,9 @@ export function setInScopeStatusOfCustomizations(
     chartsInScope: number[];
     tabsInScope: string[];
   }[],
-): ThunkAction<void, RootState, null, UnknownAction> {
+): ThunkAction<void, RootState, null, AnyAction> {
   return (
-    dispatch: ThunkDispatch<RootState, null, UnknownAction>,
+    dispatch: ThunkDispatch<RootState, null, AnyAction>,
     getState: () => RootState,
   ) => {
     const { filters } = getState().nativeFilters;

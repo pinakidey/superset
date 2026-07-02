@@ -20,7 +20,7 @@ import fetchMock from 'fetch-mock';
 import configureMockStore from 'redux-mock-store';
 import { thunk } from 'redux-thunk';
 import type { ThunkDispatch } from 'redux-thunk';
-import type { UnknownAction } from 'redux';
+import type { AnyAction } from 'redux';
 import { waitFor } from 'spec/helpers/testing-library';
 import * as actions from 'src/SqlLab/actions/sqlLab';
 import type { QueryEditor, Table, SqlLabRootState } from 'src/SqlLab/types';
@@ -41,7 +41,7 @@ const query = { ...queryFixture, id: queryId } as any;
 // Cast fixture to satisfy SqlLabRootState for getState callbacks in thunk tests
 const typedInitialState = initialState as unknown as SqlLabRootState;
 
-type DispatchExts = ThunkDispatch<SqlLabRootState, undefined, UnknownAction>;
+type DispatchExts = ThunkDispatch<SqlLabRootState, undefined, AnyAction>;
 
 const middlewares = [thunk];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

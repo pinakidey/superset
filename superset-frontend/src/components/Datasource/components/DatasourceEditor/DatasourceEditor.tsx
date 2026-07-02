@@ -28,7 +28,7 @@ import {
 } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import type { JsonObject } from '@superset-ui/core';
-import type { UnknownAction } from 'redux';
+import type { AnyAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 import { Radio } from '@superset-ui/core/components/Radio';
 import {
@@ -848,7 +848,7 @@ interface FormatQueryResponse {
 }
 
 const mapDispatchToProps = (
-  dispatch: ThunkDispatch<RootState, unknown, UnknownAction>,
+  dispatch: ThunkDispatch<RootState, unknown, AnyAction>,
 ) => ({
   runQuery: (payload: QueryPayload) =>
     dispatch(executeQuery(payload as Parameters<typeof executeQuery>[0])),
