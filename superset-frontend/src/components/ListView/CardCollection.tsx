@@ -89,17 +89,11 @@ export default function CardCollection({
           return (
             <CardWrapper
               className={cx({
-                'card-selected':
-                  bulkSelectEnabled && row.getIsSelected(),
+                'card-selected': bulkSelectEnabled && row.getIsSelected(),
                 'bulk-select': bulkSelectEnabled,
               })}
               key={row.id}
-              onClick={e =>
-                handleClick(
-                  e,
-                  row.toggleSelected,
-                )
-              }
+              onClick={e => handleClick(e, row.toggleSelected)}
               role="none"
             >
               {renderCard({ ...row.original, loading })}

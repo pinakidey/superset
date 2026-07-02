@@ -168,9 +168,7 @@ export default typedMemo(function DataTable<D extends object>({
       : sortByRef.current,
   );
   const [globalFilter, setGlobalFilter] = useState<string>('');
-  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(
-    columnNames,
-  );
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(columnNames);
   const effectivePageSize =
     initialPageSize > 0 ? initialPageSize : resultsSize || 10;
 
@@ -209,9 +207,7 @@ export default typedMemo(function DataTable<D extends object>({
           ('accessorKey' in c ? String(c.accessorKey) : undefined) ||
           String(i),
       );
-      const joinedString = allColumnIds
-        .map(id => row.getValue(id))
-        .join(' ');
+      const joinedString = allColumnIds.map(id => row.getValue(id)).join(' ');
       const matched = matchSorter([joinedString], filterValue, {
         threshold: rankings.ACRONYM,
       });
@@ -239,7 +235,10 @@ export default typedMemo(function DataTable<D extends object>({
     getSortedRowModel: serverPagination ? undefined : getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    globalFilterFn: (moreUseTableOptions as Record<string, unknown>).globalFilter as FilterFn<D> | undefined || defaultGlobalFilter,
+    globalFilterFn:
+      ((moreUseTableOptions as Record<string, unknown>).globalFilter as
+        | FilterFn<D>
+        | undefined) || defaultGlobalFilter,
     manualSorting: !!serverPagination,
     enableSortingRemoval: false,
     autoResetPageIndex: autoResetGlobalFilter,
@@ -315,10 +314,14 @@ export default typedMemo(function DataTable<D extends object>({
         const [sortByItem] = sortBy;
         const matchingColumn = columns.find(col => col?.id === sortByItem?.id);
 
-        if (matchingColumn && 'columnKey' in (matchingColumn as Record<string, unknown>)) {
+        if (
+          matchingColumn &&
+          'columnKey' in (matchingColumn as Record<string, unknown>)
+        ) {
           const sortByWithColumnKey: SortByItem = {
             ...sortByItem,
-            key: (matchingColumn as Record<string, unknown>).columnKey as string,
+            key: (matchingColumn as Record<string, unknown>)
+              .columnKey as string,
           };
 
           handleSortByChange([sortByWithColumnKey]);
@@ -407,7 +410,9 @@ export default typedMemo(function DataTable<D extends object>({
                   key={header.id}
                   data-column-name={header.column.id}
                   onClick={header.column.getToggleSortingHandler()}
-                  style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                  style={{
+                    cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                  }}
                 >
                   {headerDef}
                 </th>
@@ -428,7 +433,11 @@ export default typedMemo(function DataTable<D extends object>({
                     key: cell.id,
                   });
                 }
-                return <td key={cell.id}>{flexRender(cellDef, cell.getContext())}</td>;
+                return (
+                  <td key={cell.id}>
+                    {flexRender(cellDef, cell.getContext())}
+                  </td>
+                );
               })}
             </tr>
           ))
@@ -471,7 +480,8 @@ export default typedMemo(function DataTable<D extends object>({
     setPageSize(initialPageSize);
   }
 
-  const paginationStyle: CSSProperties = (sticky as Record<string, unknown>).height
+  const paginationStyle: CSSProperties = (sticky as Record<string, unknown>)
+    .height
     ? {}
     : { visibility: 'hidden' };
 

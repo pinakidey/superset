@@ -24,11 +24,7 @@
  */
 
 import { ReactNode } from 'react';
-import type {
-  Column,
-  Row,
-  HeaderGroup,
-} from '@tanstack/react-table';
+import type { Column, Row, HeaderGroup } from '@tanstack/react-table';
 import type { V8ColumnMeta } from './adaptColumns';
 
 import { SortOrder } from '../Table';
@@ -70,7 +66,10 @@ export function mapColumns<T extends object>(
           : 'ascend'
         : undefined) as SortOrder | undefined,
       sorter: column.getCanSort(),
-      render: (val: unknown, record: Record<string, unknown> & { rowId: string }): ReactNode => {
+      render: (
+        val: unknown,
+        record: Record<string, unknown> & { rowId: string },
+      ): ReactNode => {
         const v7Cell = meta.v7Cell as
           | ((props: {
               value: unknown;

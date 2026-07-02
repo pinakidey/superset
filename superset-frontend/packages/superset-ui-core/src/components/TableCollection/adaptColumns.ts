@@ -26,7 +26,11 @@
  */
 
 import { ReactNode } from 'react';
-import type { ColumnDef, CellContext, HeaderContext } from '@tanstack/react-table';
+import type {
+  ColumnDef,
+  CellContext,
+  HeaderContext,
+} from '@tanstack/react-table';
 
 type ColumnSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
@@ -120,7 +124,9 @@ export function adaptV7ColumnToV8<T extends object>(
   if (accessorKey) {
     result.accessorKey = accessorKey;
   } else if (accessorFn) {
-    (result as ColumnDef<T, unknown> & { accessorFn: (row: T) => unknown }).accessorFn = accessorFn;
+    (
+      result as ColumnDef<T, unknown> & { accessorFn: (row: T) => unknown }
+    ).accessorFn = accessorFn;
   }
 
   // Map Header to header
