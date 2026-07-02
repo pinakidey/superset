@@ -18,56 +18,74 @@
  */
 import { render, screen, fireEvent } from '@superset-ui/core/spec';
 import { renderHook } from '@testing-library/react';
-import { TableInstance, useTable } from 'react-table';
+import {
+  useReactTable,
+  getCoreRowModel,
+  type ColumnDef,
+} from '@tanstack/react-table';
 import TableCollection from '.';
 
-let defaultProps: any;
+interface TestRow {
+  col1: string;
+  col2: string;
+  parent: { child: string };
+  id?: number;
+}
 
-let tableHook: TableInstance<any>;
+const testColumns: ColumnDef<TestRow, unknown>[] = [
+  {
+    header: 'Column 1',
+    accessorKey: 'col1',
+    id: 'col1',
+  },
+  {
+    header: 'Column 2',
+    accessorKey: 'col2',
+    id: 'col2',
+  },
+  {
+    header: 'Nested Field',
+    accessorFn: (row: TestRow) => row.parent?.child,
+    id: 'parent.child',
+  },
+];
+
+const testData: TestRow[] = [
+  {
+    col1: 'Line 01 - Col 01',
+    col2: 'Line 01 - Col 02',
+    parent: { child: 'Nested Value 1' },
+  },
+  {
+    col1: 'Line 02 - Col 01',
+    col2: 'Line 02 - Col 02',
+    parent: { child: 'Nested Value 2' },
+  },
+  {
+    col1: 'Line 03 - Col 01',
+    col2: 'Line 03 - Col 02',
+    parent: { child: 'Nested Value 3' },
+  },
+];
+
+function useTestTable(data: TestRow[] = testData) {
+  return useReactTable({
+    columns: testColumns,
+    data,
+    getCoreRowModel: getCoreRowModel(),
+  });
+}
+
+let defaultProps: Record<string, unknown>;
+
 beforeEach(() => {
-  const columns = [
-    {
-      Header: 'Column 1',
-      accessor: 'col1',
-      id: 'col1',
-    },
-    {
-      Header: 'Column 2',
-      accessor: 'col2',
-      id: 'col2',
-    },
-    {
-      Header: 'Nested Field',
-      accessor: 'parent.child',
-      id: 'parent.child',
-      dataIndex: ['parent', 'child'],
-    },
-  ];
-  const data = [
-    {
-      col1: 'Line 01 - Col 01',
-      col2: 'Line 01 - Col 02',
-      parent: { child: 'Nested Value 1' },
-    },
-    {
-      col1: 'Line 02 - Col 01',
-      col2: 'Line 02 - Col 02',
-      parent: { child: 'Nested Value 2' },
-    },
-    {
-      col1: 'Line 03 - Col 01',
-      col2: 'Line 03 - Col 02',
-      parent: { child: 'Nested Value 3' },
-    },
-  ];
-  // @ts-expect-error
-  const tableHookResult = renderHook(() => useTable({ columns, data }));
-  tableHook = tableHookResult.result.current;
+  const { result } = renderHook(() => useTestTable());
+  const table = result.current;
   defaultProps = {
-    prepareRow: tableHook.prepareRow,
-    headerGroups: tableHook.headerGroups,
-    rows: tableHook.rows,
-    columns: tableHook.columns,
+    prepareRow: () => {},
+    headerGroups: table.getHeaderGroups(),
+    rows: table.getRowModel().rows,
+    columns: table.getAllColumns(),
     loading: false,
     highlightRowId: 1,
     getTableProps: jest.fn(),
@@ -134,14 +152,10 @@ test('Pagination should call onPageChange when page is changed', async () => {
   };
   const { rerender } = render(<TableCollection {...paginationProps} />);
 
-  // Simulate pagination change
   await screen.findByTitle('Next Page');
 
-  // Verify onPageChange would be called with correct arguments
-  // The actual AntD pagination will handle the click internally
   expect(onPageChange).toBeDefined();
 
-  // Verify that re-rendering with new pageIndex works
   rerender(<TableCollection {...paginationProps} pageIndex={1} />);
   expect(screen.getByRole('list')).toBeInTheDocument();
 });
@@ -158,10 +172,8 @@ test('Pagination callback should be stable across re-renders', () => {
 
   const { rerender } = render(<TableCollection {...paginationProps} />);
 
-  // Re-render with same props
   rerender(<TableCollection {...paginationProps} />);
 
-  // onPageChange should not have been called during re-render
   expect(onPageChange).not.toHaveBeenCalled();
 });
 
@@ -176,7 +188,6 @@ test('Should display correct page info when showRowCount is true', () => {
   };
   render(<TableCollection {...paginationProps} />);
 
-  // AntD pagination shows page info
   expect(screen.getByText('1-2 of 3')).toBeInTheDocument();
 });
 
@@ -191,7 +202,6 @@ test('Should not display page info when showRowCount is false', () => {
   };
   render(<TableCollection {...paginationProps} />);
 
-  // Page info should not be shown
   expect(screen.queryByText('1-2 of 3')).not.toBeInTheDocument();
 });
 
@@ -211,14 +221,9 @@ test('Bulk selection should work with pagination', () => {
   };
   render(<TableCollection {...selectionProps} />);
 
-  // Check that selection checkboxes are rendered
   const checkboxes = screen.getAllByRole('checkbox');
   expect(checkboxes.length).toBeGreaterThan(0);
 
-  // Guard: the select-all column header carries `data-test="header-toggle-all"`,
-  // which the `header.cell` slot keys on antd's internal `ant-table-selection-column`
-  // class. If antd renames that class, this assertion fails fast at the unit level
-  // instead of leaking into Playwright as a flake.
   expect(screen.getByTestId('header-toggle-all')).toBeInTheDocument();
 });
 
@@ -231,14 +236,11 @@ test('should call setSortBy when clicking sortable column header', () => {
 
   render(<TableCollection {...sortingProps} />);
 
-  // Target the nested field column (the column that needs the array-to-dot conversion)
   const nestedFieldHeader = screen.getAllByText('Nested Field')[0];
   expect(nestedFieldHeader).toBeInTheDocument();
 
-  // Click on the nested field column header to trigger sorting
   fireEvent.click(nestedFieldHeader);
 
-  // Verify setSortBy was called with the correct arguments and dot notation conversion
   expect(setSortBy).toHaveBeenCalledWith([
     {
       id: 'parent.child',
@@ -255,7 +257,6 @@ test('should not apply highlight class when highlightRowId is undefined', () => 
 
   const { container } = render(<TableCollection {...propsWithoutHighlight} />);
 
-  // Check that no rows have the highlight class
   const highlightedRows = container.querySelectorAll('.table-row-highlighted');
   expect(highlightedRows).toHaveLength(0);
 });
@@ -268,18 +269,16 @@ test('should not apply highlight class when highlightRowId is null', () => {
 
   const { container } = render(<TableCollection {...propsWithNullHighlight} />);
 
-  // Check that no rows have the highlight class
   const highlightedRows = container.querySelectorAll('.table-row-highlighted');
   expect(highlightedRows).toHaveLength(0);
 });
 
 test('should apply highlight class only to matching row when highlightRowId is provided', () => {
-  // Create data where the first row has id: 1 to match highlightRowId: 1
-  const dataWithIds = [
+  const dataWithIds: TestRow[] = [
     {
       col1: 'Line 01 - Col 01',
       col2: 'Line 01 - Col 02',
-      id: 1, // This should be highlighted
+      id: 1,
       parent: { child: 'Nested Value 1' },
     },
     {
@@ -296,28 +295,22 @@ test('should apply highlight class only to matching row when highlightRowId is p
     },
   ];
 
-  // Create new table hook with data that has ids
-  const { result } = renderHook(() =>
-    useTable({ columns: tableHook.columns, data: dataWithIds }),
-  );
-  const newTableHook = result.current;
+  const { result } = renderHook(() => useTestTable(dataWithIds));
+  const table = result.current;
 
   const propsWithHighlight = {
     ...defaultProps,
     highlightRowId: 1,
-    rows: newTableHook.rows,
-    prepareRow: newTableHook.prepareRow,
+    rows: table.getRowModel().rows,
   };
 
   const { container } = render(<TableCollection {...propsWithHighlight} />);
 
-  // Check that only one row has the highlight class
   const highlightedRows = container.querySelectorAll('.table-row-highlighted');
   expect(highlightedRows).toHaveLength(1);
 });
 
 test('should not apply highlight when records have no id field and highlightRowId is undefined', () => {
-  // This is the key test for the bug fix - use original data without id field
   const propsWithNoIds = {
     ...defaultProps,
     highlightRowId: undefined,
@@ -325,7 +318,6 @@ test('should not apply highlight when records have no id field and highlightRowI
 
   const { container } = render(<TableCollection {...propsWithNoIds} />);
 
-  // Check that no rows have the highlight class (was the bug: all rows were highlighted)
   const highlightedRows = container.querySelectorAll('.table-row-highlighted');
   expect(highlightedRows).toHaveLength(0);
 });

@@ -27,21 +27,24 @@ import {
   DragEvent,
   useEffect,
   useMemo,
+  useState,
 } from 'react';
 import { typedMemo, usePrevious } from '@superset-ui/core';
 import { t } from '@apache-superset/core/translation';
 import {
-  useTable,
-  usePagination,
-  useSortBy,
-  useGlobalFilter,
-  useColumnOrder,
-  PluginHook,
-  TableOptions,
-  FilterType,
-  IdType,
-  Row,
-} from 'react-table';
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+  type ColumnOrderState,
+  type Row,
+  type FilterFn,
+  type Table,
+} from '@tanstack/react-table';
 import { matchSorter, rankings } from 'match-sorter';
 import { isEqual } from 'lodash-es';
 import { Flex, Space } from '@superset-ui/core/components';
@@ -56,14 +59,16 @@ import { PAGE_SIZE_OPTIONS } from '../consts';
 import { sortAlphanumericCaseInsensitive } from './utils/sortAlphanumericCaseInsensitive';
 import { SearchOption, SortByItem } from '../types';
 import SearchSelectDropdown from './components/SearchSelectDropdown';
+import type { GetTableSize } from './hooks/useSticky';
 
-export interface DataTableProps<D extends object> extends TableOptions<D> {
+export interface DataTableProps<D extends object> {
+  columns: ColumnDef<D, unknown>[];
+  data: D[];
   tableClassName?: string;
   searchInput?: boolean | GlobalFilterProps<D>['searchInput'];
   selectPageSize?: boolean | SelectPageSizeProps['selectRenderer'];
-  pageSizeOptions?: SizeOption[]; // available page size options
+  pageSizeOptions?: SizeOption[];
   maxPageItemCount?: number;
-  hooks?: PluginHook<D>[]; // any additional hooks
   width?: string | number;
   height?: string | number;
   serverPagination?: boolean;
@@ -92,15 +97,14 @@ export interface DataTableProps<D extends object> extends TableOptions<D> {
   searchOptions: SearchOption[];
   onFilteredDataChange?: (rows: Row<D>[], filterValue?: string) => void;
   onFilteredRowsChange?: (rows: D[]) => void;
+  initialState?: Record<string, unknown>;
+  getTableSize?: GetTableSize;
+  globalFilter?: FilterFn<D>;
 }
 
 export interface RenderHTMLCellProps extends HTMLProps<HTMLTableCellElement> {
   cellContent: ReactNode;
 }
-
-const sortTypes = {
-  alphanumeric: sortAlphanumericCaseInsensitive,
-};
 
 // Be sure to pass our updateMyData and the skipReset option
 export default typedMemo(function DataTable<D extends object>({
@@ -120,7 +124,6 @@ export default typedMemo(function DataTable<D extends object>({
   rowCount,
   selectPageSize,
   noResults: noResultsText = 'No data found',
-  hooks,
   serverPagination,
   wrapperRef: userWrapperRef,
   onColumnOrderChange,
@@ -136,61 +139,46 @@ export default typedMemo(function DataTable<D extends object>({
   searchOptions,
   onFilteredDataChange,
   onFilteredRowsChange,
+  getTableSize: getTableSizeProp,
   ...moreUseTableOptions
 }: DataTableProps<D>): JSX.Element {
-  const tableHooks: PluginHook<D>[] = [
-    useGlobalFilter,
-    useSortBy,
-    usePagination,
-    useColumnOrder,
-    doSticky ? useSticky : [],
-    hooks || [],
-  ].flat();
-
   const columnNames = columns.map((column, index) => {
-    const normalizedColumn = column as typeof column & {
-      accessor?: string | ((row: D) => unknown);
-      columnKey?: string;
-      id?: string;
-    };
-
-    const accessorName =
-      typeof normalizedColumn.accessor === 'string'
-        ? normalizedColumn.accessor
-        : undefined;
-
-    return (
-      normalizedColumn.columnKey ??
-      normalizedColumn.id ??
-      accessorName ??
-      String(index)
-    );
+    const colId =
+      column.id ||
+      ('accessorKey' in column ? String(column.accessorKey) : undefined) ||
+      String(index);
+    return colId;
   });
   const previousColumnNames = usePrevious(columnNames);
   const resultsSize = serverPagination ? rowCount : data.length;
-  const sortByRef = useRef([]); // cache initial `sortby` so sorting doesn't trigger page reset
+  const sortByRef = useRef<SortingState>([]);
   const pageSizeRef = useRef([initialPageSize, resultsSize]);
-  const hasPagination = initialPageSize > 0 && resultsSize > 0; // pageSize == 0 means no pagination
+  const hasPagination = initialPageSize > 0 && resultsSize > 0;
   const hasGlobalControl =
     hasPagination || !!searchInput || renderTimeComparisonDropdown;
-  const initialState = {
-    ...initialState_,
-    // zero length means all pages, the `usePagination` plugin does not
-    // understand pageSize = 0
-    // sortBy: sortByRef.current,
-    sortBy: serverPagination ? sortByFromParent : sortByRef.current,
-    pageSize: initialPageSize > 0 ? initialPageSize : resultsSize || 10,
-  };
   const defaultWrapperRef = useRef<HTMLDivElement>(null);
   const globalControlRef = useRef<HTMLDivElement>(null);
   const paginationRef = useRef<HTMLDivElement>(null);
   const wrapperRef = userWrapperRef || defaultWrapperRef;
   const paginationData = JSON.stringify(serverPaginationData);
 
+  const [sorting, setSorting] = useState<SortingState>(
+    serverPagination
+      ? sortByFromParent.map(s => ({ id: s.id, desc: s.desc ?? false }))
+      : sortByRef.current,
+  );
+  const [globalFilter, setGlobalFilter] = useState<string>('');
+  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>(columnNames);
+  const effectivePageSize =
+    initialPageSize > 0 ? initialPageSize : resultsSize || 10;
+
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: effectivePageSize,
+  });
+
   const defaultGetTableSize = useCallback(() => {
     if (wrapperRef.current) {
-      // `initialWidth` and `initialHeight` could be also parameters like `100%`
-      // `Number` returns `NaN` on them, then we fallback to computed size
       const width = Number(initialWidth) || wrapperRef.current.clientWidth;
       const height =
         (Number(initialHeight) || wrapperRef.current.clientHeight) -
@@ -211,70 +199,89 @@ export default typedMemo(function DataTable<D extends object>({
     paginationData,
   ]);
 
-  const defaultGlobalFilter: FilterType<D> = useCallback(
-    (rows: Row<D>[], columnIds: IdType<D>[], filterValue: string) => {
-      // allow searching by "col1_value col2_value"
-      const joinedString = (row: Row<D>) =>
-        columnIds.map(x => row.values[x]).join(' ');
-      return matchSorter(rows, filterValue, {
-        keys: [...columnIds, joinedString],
+  const defaultGlobalFilter: FilterFn<D> = useCallback(
+    (row: Row<D>, columnId: string, filterValue: string) => {
+      const allColumnIds = columns.map(
+        (c, i) =>
+          c.id ||
+          ('accessorKey' in c ? String(c.accessorKey) : undefined) ||
+          String(i),
+      );
+      const joinedString = allColumnIds.map(id => row.getValue(id)).join(' ');
+      const matched = matchSorter([joinedString], filterValue, {
         threshold: rankings.ACRONYM,
-      }) as typeof rows;
+      });
+      return matched.length > 0;
     },
-    [],
+    [columns],
   );
 
-  const {
-    rows, // filtered/sorted rows before pagination
-    getTableProps,
-    getTableBodyProps,
-    prepareRow,
-    headerGroups,
-    footerGroups,
-    page,
-    pageCount,
-    gotoPage,
-    preGlobalFilteredRows,
-    setGlobalFilter,
-    setPageSize: setPageSize_,
-    wrapStickyTable,
-    setColumnOrder,
-    allColumns,
+  const autoResetGlobalFilter = !isEqual(columnNames, previousColumnNames);
+
+  const table: Table<D> = useReactTable<D>({
+    columns,
+    data,
     state: {
-      pageIndex,
-      pageSize,
-      globalFilter: filterValue,
-      sticky = {},
-      sortBy,
+      sorting,
+      globalFilter,
+      columnOrder,
+      pagination,
     },
-  } = useTable<D>(
-    {
-      columns,
-      data,
-      initialState,
-      getTableSize: defaultGetTableSize,
-      globalFilter: defaultGlobalFilter,
-      sortTypes,
-      autoResetGlobalFilter: !isEqual(columnNames, previousColumnNames),
-      autoResetSortBy: !isEqual(columnNames, previousColumnNames),
-      manualSortBy: !!serverPagination,
-      ...moreUseTableOptions,
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnOrderChange: setColumnOrder,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: serverPagination ? undefined : getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn:
+      ((moreUseTableOptions as Record<string, unknown>).globalFilter as
+        | FilterFn<D>
+        | undefined) || defaultGlobalFilter,
+    manualSorting: !!serverPagination,
+    enableSortingRemoval: false,
+    autoResetPageIndex: autoResetGlobalFilter,
+    sortingFns: {
+      alphanumeric: (rowA, rowB, columnId) =>
+        sortAlphanumericCaseInsensitive(rowA, rowB, columnId),
     },
-    ...tableHooks,
-  );
+  });
+
+  const allColumns = table.getAllColumns();
+  const headerGroups = table.getHeaderGroups();
+  const footerGroups = table.getFooterGroups();
+  const sortedRows = table.getSortedRowModel().rows;
+  const page = table.getRowModel().rows;
+  const pageCount = table.getPageCount();
+  const { pageIndex } = table.getState().pagination;
+  const currentPageSize = table.getState().pagination.pageSize;
+  const filterValue = table.getState().globalFilter;
+  const sortBy = table.getState().sorting;
+  const preGlobalFilteredRows = table.getPreFilteredRowModel().rows;
+
+  const stickyHook = useSticky({
+    data,
+    page,
+    rows: sortedRows,
+    allColumnIds: allColumns.map(c => c.id),
+    getTableSize: getTableSizeProp || defaultGetTableSize,
+  });
+  const { wrapStickyTable, sticky } = doSticky
+    ? stickyHook
+    : { wrapStickyTable: undefined, sticky: {} as Record<string, unknown> };
 
   const rowSignature = useMemo(
-    // sort the rows by id to ensure the total is not recalculated when the rows are only reordered
     () =>
-      rows
+      sortedRows
         .map((row, index) => row.id ?? index)
         .sort()
         .join('|'),
-    [rows],
+    [sortedRows],
   );
 
-  const rowsRef = useRef(rows);
-  rowsRef.current = rows;
+  const rowsRef = useRef(sortedRows);
+  rowsRef.current = sortedRows;
 
   useEffect(() => {
     if (!onFilteredDataChange) {
@@ -295,7 +302,7 @@ export default typedMemo(function DataTable<D extends object>({
         setGlobalFilter(query);
       }
     },
-    [manualSearch, onSearchChange, setGlobalFilter],
+    [manualSearch, onSearchChange],
   );
 
   // updating the sort by to the own State of table viz
@@ -307,10 +314,13 @@ export default typedMemo(function DataTable<D extends object>({
         const [sortByItem] = sortBy;
         const matchingColumn = columns.find(col => col?.id === sortByItem?.id);
 
-        if (matchingColumn && 'columnKey' in matchingColumn) {
+        const { columnKey } = matchingColumn as ColumnDef<D, unknown> & {
+          columnKey?: string;
+        };
+        if (matchingColumn && columnKey) {
           const sortByWithColumnKey: SortByItem = {
             ...sortByItem,
-            key: (matchingColumn as { columnKey: string }).columnKey,
+            key: columnKey,
           };
 
           handleSortByChange([sortByWithColumnKey]);
@@ -326,10 +336,13 @@ export default typedMemo(function DataTable<D extends object>({
     if (serverPagination) {
       onServerPaginationChange(0, size);
     }
-    // keep the original size if data is empty
     if (size || resultsSize !== 0) {
-      setPageSize_(size === 0 ? resultsSize : size);
+      table.setPageSize(size === 0 ? resultsSize : size);
     }
+  };
+
+  const gotoPage = (pageNum: number) => {
+    table.setPageIndex(pageNum);
   };
 
   const noResults =
@@ -345,7 +358,7 @@ export default typedMemo(function DataTable<D extends object>({
     ) as JSX.Element;
   }
 
-  const shouldRenderFooter = columns.some(x => !!x.Footer);
+  const shouldRenderFooter = columns.some(x => !!x.footer);
 
   let columnBeingDragged = -1;
 
@@ -374,39 +387,55 @@ export default typedMemo(function DataTable<D extends object>({
   };
 
   const renderTable = () => (
-    <table {...getTableProps({ className: tableClassName })}>
+    <table className={tableClassName}>
       <thead>
         {renderGroupingHeaders ? renderGroupingHeaders() : null}
-        {headerGroups.map(headerGroup => {
-          const { key: headerGroupKey, ...headerGroupProps } =
-            headerGroup.getHeaderGroupProps();
-          return (
-            <tr key={headerGroupKey || headerGroup.id} {...headerGroupProps}>
-              {headerGroup.headers.map(column =>
-                column.render('Header', {
-                  key: column.id,
-                  ...column.getSortByToggleProps(),
+        {headerGroups.map(headerGroup => (
+          <tr key={headerGroup.id}>
+            {headerGroup.headers.map(header => {
+              if (header.isPlaceholder) return null;
+              const headerDef = header.column.columnDef.header;
+              if (typeof headerDef === 'function') {
+                return flexRender(headerDef, {
+                  ...header.getContext(),
+                  onClick: header.column.getToggleSortingHandler(),
                   onDragStart,
                   onDrop,
-                }),
-              )}
-            </tr>
-          );
-        })}
+                } as Parameters<typeof flexRender>[1]);
+              }
+              return (
+                <th
+                  key={header.id}
+                  data-column-name={header.column.id}
+                  onClick={header.column.getToggleSortingHandler()}
+                  style={{
+                    cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                  }}
+                >
+                  {headerDef}
+                </th>
+              );
+            })}
+          </tr>
+        ))}
       </thead>
-      <tbody {...getTableBodyProps()}>
+      <tbody>
         {page && page.length > 0 ? (
-          page.map(row => {
-            prepareRow(row);
-            const { key: rowKey, ...rowProps } = row.getRowProps();
-            return (
-              <tr key={rowKey || row.id} {...rowProps}>
-                {row.cells.map(cell =>
-                  cell.render('Cell', { key: cell.column.id }),
-                )}
-              </tr>
-            );
-          })
+          page.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => {
+                const cellDef = cell.column.columnDef.cell;
+                if (typeof cellDef === 'function') {
+                  return flexRender(cellDef, cell.getContext());
+                }
+                return (
+                  <td key={cell.id}>
+                    {flexRender(cellDef, cell.getContext())}
+                  </td>
+                );
+              })}
+            </tr>
+          ))
         ) : (
           <tr>
             <td className="dt-no-results" colSpan={columns.length}>
@@ -417,17 +446,18 @@ export default typedMemo(function DataTable<D extends object>({
       </tbody>
       {shouldRenderFooter && (
         <tfoot>
-          {footerGroups.map(footerGroup => {
-            const { key: footerGroupKey, ...footerGroupProps } =
-              footerGroup.getHeaderGroupProps();
-            return (
-              <tr key={footerGroupKey || footerGroup.id} {...footerGroupProps}>
-                {footerGroup.headers.map(column =>
-                  column.render('Footer', { key: column.id }),
-                )}
-              </tr>
-            );
-          })}
+          {footerGroups.map(footerGroup => (
+            <tr key={footerGroup.id}>
+              {footerGroup.headers.map(header => {
+                if (header.isPlaceholder) return null;
+                const footerDef = header.column.columnDef.footer;
+                if (typeof footerDef === 'function') {
+                  return flexRender(footerDef, header.getContext());
+                }
+                return <td key={header.id}>{footerDef}</td>;
+              })}
+            </tr>
+          ))}
         </tfoot>
       )}
     </table>
@@ -436,20 +466,19 @@ export default typedMemo(function DataTable<D extends object>({
   // force update the pageSize when it's been update from the initial state
   if (
     pageSizeRef.current[0] !== initialPageSize ||
-    // when initialPageSize stays as zero, but total number of records changed,
-    // we'd also need to update page size
     (initialPageSize === 0 && pageSizeRef.current[1] !== resultsSize)
   ) {
     pageSizeRef.current = [initialPageSize, resultsSize];
     setPageSize(initialPageSize);
   }
 
-  const paginationStyle: CSSProperties = sticky.height
+  const paginationStyle: CSSProperties = (sticky as Record<string, unknown>)
+    .height
     ? {}
     : { visibility: 'hidden' };
 
   let resultPageCount = pageCount;
-  let resultCurrentPageSize = pageSize;
+  let resultCurrentPageSize = currentPageSize;
   let resultCurrentPage = pageIndex;
   let resultOnPageChange: (page: number) => void = gotoPage;
   if (serverPagination) {
@@ -482,26 +511,22 @@ export default typedMemo(function DataTable<D extends object>({
   const rafRef = useRef<number | null>(null);
   const lastSigRef = useRef<string>('');
 
-  // Prefer a stable identifier from original row data; otherwise use a deterministic
-  // concatenation of visible values (keys sorted so column order changes are detected).
-  function stableRowKey<D extends object>(r: Row<D>): string {
+  function stableRowKey<R extends object>(r: Row<R>): string {
     const orig = r.original as Record<string, unknown> | undefined;
     if (orig) {
       const idLike =
-        (orig as any).id ??
-        (orig as any).ID ??
-        (orig as any).key ??
-        (orig as any).uuid;
+        (orig as Record<string, unknown>).id ??
+        (orig as Record<string, unknown>).ID ??
+        (orig as Record<string, unknown>).key ??
+        (orig as Record<string, unknown>).uuid;
       if (idLike != null) return String(idLike);
     }
 
-    // Fallback: derive from row.values, but make it stable against column order changes.
-    const v = r.values as Record<string, unknown>;
-    const keys = Object.keys(v).sort(); // detect column order changes
-    return keys.map(k => String(v[k] ?? '')).join('|');
+    const cells = r.getAllCells();
+    const keys = cells.map(c => c.column.id).sort();
+    return keys.map(k => String(r.getValue(k) ?? '')).join('|');
   }
 
-  // Very small, fast hash for strings (no crypto dependency).
   function hashString(s: string): string {
     let h = 0;
     for (let i = 0; i < s.length; i += 1) {
@@ -511,12 +536,12 @@ export default typedMemo(function DataTable<D extends object>({
     return String(h);
   }
 
-  function signatureOfRows<D extends object>(rs: Row<D>[]): string {
+  function signatureOfRows<R extends object>(rs: Row<R>[]): string {
     const keys = rs.map(stableRowKey);
     const len = keys.length;
     const first = keys[0] ?? '';
     const last = keys[len - 1] ?? '';
-    const digest = hashString(keys.join('\u0001')); // non-printable separator to avoid collisions
+    const digest = hashString(keys.join('\u0001'));
     return `${len}|${first}|${last}|${digest}`;
   }
 
@@ -525,7 +550,7 @@ export default typedMemo(function DataTable<D extends object>({
       return;
     }
 
-    const sig = signatureOfRows(rows);
+    const sig = signatureOfRows(sortedRows);
 
     if (sig !== lastSigRef.current) {
       lastSigRef.current = sig;
@@ -534,8 +559,7 @@ export default typedMemo(function DataTable<D extends object>({
       }
       rafRef.current = requestAnimationFrame(() => {
         if (isMountedRef.current) {
-          // Only emit originals when the signature truly changed
-          onFilteredRowsChange(rows.map(r => r.original as D));
+          onFilteredRowsChange(sortedRows.map(r => r.original as D));
         }
       });
     }
@@ -546,7 +570,7 @@ export default typedMemo(function DataTable<D extends object>({
         rafRef.current = null;
       }
     };
-  }, [rows, serverPagination, onFilteredRowsChange]);
+  }, [sortedRows, serverPagination, onFilteredRowsChange]);
 
   return (
     <div
@@ -593,7 +617,9 @@ export default typedMemo(function DataTable<D extends object>({
                   }
                   preGlobalFilteredRows={preGlobalFilteredRows}
                   setGlobalFilter={
-                    manualSearch ? handleSearchChange : setGlobalFilter
+                    manualSearch
+                      ? handleSearchChange
+                      : (v: string | undefined) => setGlobalFilter(v ?? '')
                   }
                   filterValue={manualSearch ? initialSearchText : filterValue}
                   id={searchInputId}

@@ -32,7 +32,7 @@ import {
   useRef,
   Key,
 } from 'react';
-import type { CellProps } from 'react-table';
+import type { CellContext } from '@tanstack/react-table';
 import { Link, useHistory } from 'react-router-dom';
 import rison from 'rison';
 import {
@@ -703,7 +703,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
               explore_url: exploreURL,
             },
           },
-        }: CellProps<Dataset>) => {
+        }: CellContext<Dataset>) => {
           let titleLink: JSX.Element;
           if (PREVENT_UNSAFE_DEFAULT_URLS_ON_DATASET) {
             titleLink = (
@@ -755,7 +755,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           row: {
             original: { kind },
           },
-        }: CellProps<Dataset>) =>
+        }: CellContext<Dataset>) =>
           kind === 'semantic_view' ? (
             <span>{t('Semantic View')}</span>
           ) : (
@@ -772,7 +772,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           row: {
             original: { database },
           },
-        }: CellProps<Dataset>) => database?.database_name || '-',
+        }: CellContext<Dataset>) => database?.database_name || '-',
         Header: databaseLabel(),
         accessor: 'database.database_name',
         size: 'xl',
@@ -783,7 +783,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           row: {
             original: { schema },
           },
-        }: CellProps<Dataset>) => schema || '-',
+        }: CellContext<Dataset>) => schema || '-',
         Header: t('Schema'),
         accessor: 'schema',
         size: 'lg',
@@ -800,7 +800,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           row: {
             original: { owners = [] },
           },
-        }: CellProps<Dataset>) => <FacePile users={owners} />,
+        }: CellContext<Dataset>) => <FacePile users={owners} />,
         Header: t('Owners'),
         id: 'owners',
         disableSortBy: true,
@@ -814,7 +814,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
               changed_by: changedBy,
             },
           },
-        }: CellProps<Dataset>) => (
+        }: CellContext<Dataset>) => (
           <ModifiedInfo date={changedOn} user={changedBy} />
         ),
         Header: t('Last modified'),
@@ -835,7 +835,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         id: 'source_type',
       },
       {
-        Cell: ({ row: { original } }: CellProps<Dataset>) => {
+        Cell: ({ row: { original } }: CellContext<Dataset>) => {
           const isSemanticView = original.kind === 'semantic_view';
 
           // Semantic view: show edit and delete buttons

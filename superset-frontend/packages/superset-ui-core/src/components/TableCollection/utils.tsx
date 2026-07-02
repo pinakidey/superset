@@ -19,26 +19,17 @@
 
 /**
  * This file contains utility functions for mapping columns and rows.
- * These functions act as a compatibility layer between Ant Design Table and react-table.
+ * These functions act as a compatibility layer between Ant Design Table
+ * and @tanstack/react-table v8.
  */
 
 import { ReactNode } from 'react';
-import {
-  CellValue,
-  Row,
-  ColumnInstance as RTColumnInstance,
-  HeaderGroup as RTHeaderGroup,
-  UseSortByColumnOptions,
-  UseSortByColumnProps,
-  UseResizeColumnsColumnOptions,
-  UseResizeColumnsColumnProps,
-} from 'react-table';
+import type { Column, Row, HeaderGroup } from '@tanstack/react-table';
+import type { V8ColumnMeta } from './adaptColumns';
 
 import { SortOrder } from '../Table';
 
 type TableSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
-
-type RowWithId<T extends object> = Row<T> & { rowId: string };
 
 const COLUMN_SIZE_MAP: Record<TableSize, number> = {
   xs: 25,
@@ -49,73 +40,43 @@ const COLUMN_SIZE_MAP: Record<TableSize, number> = {
   xxl: 200,
 };
 
-type EnhancedColumnInstance<T extends object = any> = RTColumnInstance<T> &
-  Partial<UseSortByColumnOptions<T>> &
-  Partial<UseSortByColumnProps<T>> &
-  Partial<UseResizeColumnsColumnOptions<T>> &
-  Partial<UseResizeColumnsColumnProps<T>> & {
-    hidden?: boolean;
-    size?: keyof typeof COLUMN_SIZE_MAP;
-    className?: string;
-  };
-
-type EnhancedHeaderGroup<T extends object = any> = RTHeaderGroup<T> & {
-  isSorted?: boolean;
-  isSortedDesc?: boolean;
-};
-
-function getSortingInfo<T extends object>(
-  headerGroups: EnhancedHeaderGroup<T>[],
-  headerId: string,
-): {
-  isSorted: boolean;
-  isSortedDesc: boolean;
-} {
-  for (const headerGroup of headerGroups) {
-    const header = headerGroup.headers.find(h => h.id === headerId);
-    if (header) {
-      return {
-        isSorted: header.isSorted ?? false,
-        isSortedDesc: header.isSortedDesc ?? false,
-      };
-    }
-  }
-  return { isSorted: false, isSortedDesc: false };
-}
-
 export function mapColumns<T extends object>(
-  columns: EnhancedColumnInstance<T>[],
-  headerGroups: EnhancedHeaderGroup<T>[],
+  columns: Column<T, unknown>[],
+  headerGroups: HeaderGroup<T>[],
   columnsForWrapText?: string[],
 ) {
   return columns.map(column => {
-    const { isSorted, isSortedDesc } = getSortingInfo(headerGroups, column.id);
+    const meta = (column.columnDef.meta ?? {}) as V8ColumnMeta;
+    const isSorted = column.getIsSorted();
+    const isSortedDesc = isSorted === 'desc';
+
     return {
-      title: column.Header as ReactNode,
+      title: meta.v7Header as ReactNode,
       dataIndex: column.id?.includes('.') ? column.id.split('.') : column.id,
-      hidden: column.hidden,
+      hidden: meta.hidden,
       key: column.id,
-      width: column.size ? COLUMN_SIZE_MAP[column.size] : undefined,
+      width: meta.size ? COLUMN_SIZE_MAP[meta.size] : undefined,
       ellipsis: !columnsForWrapText?.includes(column.id),
       defaultSortOrder: (isSorted
         ? isSortedDesc
           ? 'descend'
           : 'ascend'
         : undefined) as SortOrder | undefined,
-      sorter: !column.disableSortBy,
-      render: (val: CellValue<T>, record: RowWithId<T>): ReactNode => {
-        if (column.Cell) {
-          const cellRenderer = column.Cell as ({
-            value,
-            row,
-            column,
-          }: {
-            value: CellValue<T>;
-            row: { original: Row<T>; id: string };
-            column: RTColumnInstance<T>;
-          }) => ReactNode;
+      sorter: column.getCanSort(),
+      render: (
+        val: unknown,
+        record: Record<string, unknown> & { rowId: string },
+      ): ReactNode => {
+        const v7Cell = meta.v7Cell as
+          | ((props: {
+              value: unknown;
+              row: { original: Record<string, unknown>; id: string };
+              column: Column<T, unknown>;
+            }) => ReactNode)
+          | undefined;
 
-          return cellRenderer({
+        if (v7Cell) {
+          return v7Cell({
             value: val,
             row: { original: record, id: record.rowId },
             column,
@@ -123,17 +84,14 @@ export function mapColumns<T extends object>(
         }
         return val as ReactNode;
       },
-      className: column.className,
+      className: meta.className,
     };
   });
 }
 
-export function mapRows<T extends object>(
-  rows: Row<T>[],
-  prepareRow: (row: Row<T>) => void,
-) {
-  return rows.map(row => {
-    prepareRow(row);
-    return { rowId: row.id, ...row.original, ...row.getRowProps() };
-  });
+export function mapRows<T extends object>(rows: Row<T>[]) {
+  return rows.map(row => ({
+    rowId: row.id,
+    ...(row.original as Record<string, unknown>),
+  }));
 }

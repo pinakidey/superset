@@ -19,34 +19,21 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Meta, StoryFn } from '@storybook/react-webpack5';
 import {
-  useTable,
-  useSortBy,
-  Column,
-  Row,
-  SortingRule,
-  HeaderGroup,
-  ColumnInstance,
-  TablePropGetter,
-  TableBodyPropGetter,
-} from 'react-table';
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  type ColumnDef,
+  type Row,
+  type SortingState,
+} from '@tanstack/react-table';
 import TableCollection from '.';
 import { TableSize } from '../Table';
-
-// Type aliases for casting to the component's expected object-based types
-// Required because memo() loses the generic type parameter
-type AnyProps = TablePropGetter<object>;
-type AnyBodyProps = TableBodyPropGetter<object>;
-type AnyHeaders = HeaderGroup<object>[];
-type AnyRows = Row<object>[];
-type AnyColumns = ColumnInstance<object>[];
-type AnyPrepareRow = (row: Row<object>) => void;
 
 export default {
   title: 'Components/TableCollection',
   component: TableCollection,
 } as Meta<typeof TableCollection>;
 
-// Sample data type
 interface SampleData {
   id: number;
   name: string;
@@ -56,7 +43,6 @@ interface SampleData {
   lastLogin: string;
 }
 
-// Sample data generator
 const generateSampleData = (count: number): SampleData[] =>
   Array.from({ length: count }, (_, i) => ({
     id: i + 1,
@@ -69,41 +55,32 @@ const generateSampleData = (count: number): SampleData[] =>
     ).toLocaleDateString(),
   }));
 
-// Basic table story
+const sampleColumns: ColumnDef<SampleData, unknown>[] = [
+  { header: 'ID', accessorKey: 'id', id: 'id' },
+  { header: 'Name', accessorKey: 'name', id: 'name' },
+  { header: 'Email', accessorKey: 'email', id: 'email' },
+  { header: 'Role', accessorKey: 'role', id: 'role' },
+  { header: 'Status', accessorKey: 'status', id: 'status' },
+  { header: 'Last Login', accessorKey: 'lastLogin', id: 'lastLogin' },
+];
+
 export const Basic: StoryFn = () => {
   const data = useMemo(() => generateSampleData(10), []);
 
-  const columns: Column<SampleData>[] = useMemo(
-    () => [
-      { Header: 'ID', accessor: 'id' },
-      { Header: 'Name', accessor: 'name' },
-      { Header: 'Email', accessor: 'email' },
-      { Header: 'Role', accessor: 'role' },
-      { Header: 'Status', accessor: 'status' },
-      { Header: 'Last Login', accessor: 'lastLogin' },
-    ],
-    [],
-  );
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    columns: tableColumns,
-  } = useTable<SampleData>({ columns, data }, useSortBy);
+  const table = useReactTable({
+    columns: sampleColumns,
+    data,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   return (
     <TableCollection
-      getTableProps={getTableProps as AnyProps}
-      getTableBodyProps={getTableBodyProps as AnyBodyProps}
-      headerGroups={headerGroups as AnyHeaders}
-      rows={rows as AnyRows}
-      columns={tableColumns as AnyColumns}
-      prepareRow={prepareRow as AnyPrepareRow}
+      headerGroups={table.getHeaderGroups()}
+      rows={table.getRowModel().rows}
+      columns={table.getAllColumns()}
       loading={false}
-      totalCount={rows.length}
+      totalCount={data.length}
       pageSize={10}
     />
   );
@@ -118,7 +95,6 @@ Basic.parameters = {
   },
 };
 
-// With pagination
 export const WithPagination: StoryFn = () => {
   const allData = useMemo(() => generateSampleData(50), []);
   const [pageIndex, setPageIndex] = useState(0);
@@ -129,25 +105,17 @@ export const WithPagination: StoryFn = () => {
     [allData, pageIndex],
   );
 
-  const columns: Column<SampleData>[] = useMemo(
-    () => [
-      { Header: 'ID', accessor: 'id' },
-      { Header: 'Name', accessor: 'name' },
-      { Header: 'Email', accessor: 'email' },
-      { Header: 'Role', accessor: 'role' },
-      { Header: 'Status', accessor: 'status' },
-    ],
+  const cols = useMemo(
+    () => sampleColumns.filter(c => c.id !== 'lastLogin'),
     [],
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    columns: tableColumns,
-  } = useTable<SampleData>({ columns, data: paginatedData }, useSortBy);
+  const table = useReactTable({
+    columns: cols,
+    data: paginatedData,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   const handlePageChange = useCallback((page: number) => {
     setPageIndex(page);
@@ -155,12 +123,9 @@ export const WithPagination: StoryFn = () => {
 
   return (
     <TableCollection
-      getTableProps={getTableProps as AnyProps}
-      getTableBodyProps={getTableBodyProps as AnyBodyProps}
-      headerGroups={headerGroups as AnyHeaders}
-      rows={rows as AnyRows}
-      columns={tableColumns as AnyColumns}
-      prepareRow={prepareRow as AnyPrepareRow}
+      headerGroups={table.getHeaderGroups()}
+      rows={table.getRowModel().rows}
+      columns={table.getAllColumns()}
       loading={false}
       pageIndex={pageIndex}
       pageSize={pageSize}
@@ -180,40 +145,35 @@ WithPagination.parameters = {
   },
 };
 
-// With row selection
 export const WithRowSelection: StoryFn = () => {
   const data = useMemo(() => generateSampleData(10), []);
   const [selectedRows, setSelectedRows] = useState<Row<SampleData>[]>([]);
 
-  const columns: Column<SampleData>[] = useMemo(
-    () => [
-      { Header: 'ID', accessor: 'id' },
-      { Header: 'Name', accessor: 'name' },
-      { Header: 'Email', accessor: 'email' },
-      { Header: 'Role', accessor: 'role' },
-    ],
+  const cols = useMemo(
+    () =>
+      sampleColumns.filter(c =>
+        ['id', 'name', 'email', 'role'].includes(c.id as string),
+      ),
     [],
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    columns: tableColumns,
-  } = useTable<SampleData>({ columns, data }, useSortBy);
+  const table = useReactTable({
+    columns: cols,
+    data,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  const { rows } = table.getRowModel();
 
   const toggleRowSelected = useCallback(
     (rowId: string, selected: boolean) => {
       const row = rows.find(r => r.id === rowId);
       if (row) {
         if (selected) {
-          setSelectedRows(prev => [...prev, row] as Row<SampleData>[]);
+          setSelectedRows(prev => [...prev, row]);
         } else {
-          setSelectedRows(
-            prev => prev.filter(r => r.id !== rowId) as Row<SampleData>[],
-          );
+          setSelectedRows(prev => prev.filter(r => r.id !== rowId));
         }
       }
     },
@@ -223,7 +183,7 @@ export const WithRowSelection: StoryFn = () => {
   const toggleAllRowsSelected = useCallback(
     (selected?: boolean) => {
       if (selected) {
-        setSelectedRows(rows as Row<SampleData>[]);
+        setSelectedRows(rows);
       } else {
         setSelectedRows([]);
       }
@@ -240,15 +200,12 @@ export const WithRowSelection: StoryFn = () => {
         )}
       </div>
       <TableCollection
-        getTableProps={getTableProps as AnyProps}
-        getTableBodyProps={getTableBodyProps as AnyBodyProps}
-        headerGroups={headerGroups as AnyHeaders}
-        rows={rows as AnyRows}
-        columns={tableColumns as AnyColumns}
-        prepareRow={prepareRow as AnyPrepareRow}
+        headerGroups={table.getHeaderGroups()}
+        rows={rows}
+        columns={table.getAllColumns()}
         loading={false}
         bulkSelectEnabled
-        selectedFlatRows={selectedRows as AnyRows}
+        selectedFlatRows={selectedRows}
         toggleRowSelected={toggleRowSelected}
         toggleAllRowsSelected={toggleAllRowsSelected}
         totalCount={rows.length}
@@ -267,38 +224,24 @@ WithRowSelection.parameters = {
   },
 };
 
-// Loading state
 export const LoadingState: StoryFn = () => {
   const data: SampleData[] = useMemo(() => [], []);
-
-  const columns: Column<SampleData>[] = useMemo(
-    () => [
-      { Header: 'ID', accessor: 'id' },
-      { Header: 'Name', accessor: 'name' },
-      { Header: 'Email', accessor: 'email' },
-      { Header: 'Role', accessor: 'role' },
-      { Header: 'Status', accessor: 'status' },
-    ],
+  const cols = useMemo(
+    () => sampleColumns.filter(c => c.id !== 'lastLogin'),
     [],
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    columns: tableColumns,
-  } = useTable<SampleData>({ columns, data }, useSortBy);
+  const table = useReactTable({
+    columns: cols,
+    data,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   return (
     <TableCollection
-      getTableProps={getTableProps as AnyProps}
-      getTableBodyProps={getTableBodyProps as AnyBodyProps}
-      headerGroups={headerGroups as AnyHeaders}
-      rows={rows as AnyRows}
-      columns={tableColumns as AnyColumns}
-      prepareRow={prepareRow as AnyPrepareRow}
+      headerGroups={table.getHeaderGroups()}
+      rows={table.getRowModel().rows}
+      columns={table.getAllColumns()}
       loading
       totalCount={0}
       pageSize={10}
@@ -314,17 +257,13 @@ LoadingState.parameters = {
   },
 };
 
-// Different sizes
 export const TableSizes: StoryFn = () => {
   const data = useMemo(() => generateSampleData(5), []);
-
-  const columns: Column<SampleData>[] = useMemo(
-    () => [
-      { Header: 'ID', accessor: 'id' },
-      { Header: 'Name', accessor: 'name' },
-      { Header: 'Email', accessor: 'email' },
-      { Header: 'Role', accessor: 'role' },
-    ],
+  const cols = useMemo(
+    () =>
+      sampleColumns.filter(c =>
+        ['id', 'name', 'email', 'role'].includes(c.id as string),
+      ),
     [],
   );
 
@@ -337,28 +276,23 @@ export const TableSizes: StoryFn = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       {sizes.map(size => {
-        const {
-          getTableProps,
-          getTableBodyProps,
-          headerGroups,
-          rows,
-          prepareRow,
-          columns: tableColumns,
-        } = useTable<SampleData>({ columns, data }, useSortBy);
+        const table = useReactTable({
+          columns: cols,
+          data,
+          getCoreRowModel: getCoreRowModel(),
+          getSortedRowModel: getSortedRowModel(),
+        });
 
         return (
           <div key={size}>
             <h4 style={{ marginBottom: 8 }}>Size: {size}</h4>
             <TableCollection
-              getTableProps={getTableProps as AnyProps}
-              getTableBodyProps={getTableBodyProps as AnyBodyProps}
-              headerGroups={headerGroups as AnyHeaders}
-              rows={rows as AnyRows}
-              columns={tableColumns as AnyColumns}
-              prepareRow={prepareRow as AnyPrepareRow}
+              headerGroups={table.getHeaderGroups()}
+              rows={table.getRowModel().rows}
+              columns={table.getAllColumns()}
               loading={false}
               size={size}
-              totalCount={rows.length}
+              totalCount={data.length}
               pageSize={10}
             />
           </div>
@@ -376,9 +310,8 @@ TableSizes.parameters = {
   },
 };
 
-// With controlled sorting
 export const WithControlledSorting: StoryFn = () => {
-  const [sortBy, setSortBy] = useState<SortingRule<SampleData>[]>([
+  const [sortBy, setSortBy] = useState<SortingState>([
     { id: 'name', desc: false },
   ]);
 
@@ -397,33 +330,19 @@ export const WithControlledSorting: StoryFn = () => {
     return rawData;
   }, [sortBy]);
 
-  const columns: Column<SampleData>[] = useMemo(
-    () => [
-      { Header: 'ID', accessor: 'id' },
-      { Header: 'Name', accessor: 'name' },
-      { Header: 'Email', accessor: 'email' },
-      { Header: 'Role', accessor: 'role' },
-      { Header: 'Status', accessor: 'status' },
-    ],
+  const cols = useMemo(
+    () => sampleColumns.filter(c => c.id !== 'lastLogin'),
     [],
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    columns: tableColumns,
-  } = useTable<SampleData>(
-    {
-      columns,
-      data,
-      initialState: { sortBy },
-      manualSortBy: true,
-    },
-    useSortBy,
-  );
+  const table = useReactTable({
+    columns: cols,
+    data,
+    state: { sorting: sortBy },
+    onSortingChange: setSortBy,
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+  });
 
   return (
     <div>
@@ -434,15 +353,12 @@ export const WithControlledSorting: StoryFn = () => {
           : 'none'}
       </div>
       <TableCollection
-        getTableProps={getTableProps as AnyProps}
-        getTableBodyProps={getTableBodyProps as AnyBodyProps}
-        headerGroups={headerGroups as AnyHeaders}
-        rows={rows as AnyRows}
-        columns={tableColumns as AnyColumns}
-        prepareRow={prepareRow as AnyPrepareRow}
+        headerGroups={table.getHeaderGroups()}
+        rows={table.getRowModel().rows}
+        columns={table.getAllColumns()}
         loading={false}
         setSortBy={setSortBy}
-        totalCount={rows.length}
+        totalCount={data.length}
         pageSize={15}
       />
     </div>
@@ -458,29 +374,24 @@ WithControlledSorting.parameters = {
   },
 };
 
-// With row highlighting
 export const WithRowHighlighting: StoryFn = () => {
   const data = useMemo(() => generateSampleData(10), []);
   const [highlightRowId, setHighlightRowId] = useState<number | undefined>(3);
 
-  const columns: Column<SampleData>[] = useMemo(
-    () => [
-      { Header: 'ID', accessor: 'id' },
-      { Header: 'Name', accessor: 'name' },
-      { Header: 'Email', accessor: 'email' },
-      { Header: 'Role', accessor: 'role' },
-    ],
+  const cols = useMemo(
+    () =>
+      sampleColumns.filter(c =>
+        ['id', 'name', 'email', 'role'].includes(c.id as string),
+      ),
     [],
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    columns: tableColumns,
-  } = useTable<SampleData>({ columns, data }, useSortBy);
+  const table = useReactTable({
+    columns: cols,
+    data,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   return (
     <div>
@@ -505,15 +416,12 @@ export const WithRowHighlighting: StoryFn = () => {
         </label>
       </div>
       <TableCollection
-        getTableProps={getTableProps as AnyProps}
-        getTableBodyProps={getTableBodyProps as AnyBodyProps}
-        headerGroups={headerGroups as AnyHeaders}
-        rows={rows as AnyRows}
-        columns={tableColumns as AnyColumns}
-        prepareRow={prepareRow as AnyPrepareRow}
+        headerGroups={table.getHeaderGroups()}
+        rows={table.getRowModel().rows}
+        columns={table.getAllColumns()}
         loading={false}
         highlightRowId={highlightRowId}
-        totalCount={rows.length}
+        totalCount={data.length}
         pageSize={10}
       />
     </div>

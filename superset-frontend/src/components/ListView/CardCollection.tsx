@@ -17,16 +17,16 @@
  * under the License.
  */
 import { ReactNode, MouseEvent as ReactMouseEvent } from 'react';
-import { TableInstance, Row, UseRowSelectRowProps } from 'react-table';
+import type { Row } from '@tanstack/react-table';
 import { styled } from '@apache-superset/core/theme';
 import cx from 'classnames';
 
 interface CardCollectionProps {
   bulkSelectEnabled?: boolean;
   loading: boolean;
-  prepareRow: TableInstance['prepareRow'];
-  renderCard?: (row: any) => ReactNode;
-  rows: TableInstance['rows'];
+  prepareRow: (row: Row<Record<string, unknown>>) => void;
+  renderCard?: (row: Record<string, unknown>) => ReactNode;
+  rows: Row<Record<string, unknown>>[];
   showThumbnails?: boolean;
 }
 
@@ -89,18 +89,11 @@ export default function CardCollection({
           return (
             <CardWrapper
               className={cx({
-                'card-selected':
-                  bulkSelectEnabled &&
-                  (row as Row & UseRowSelectRowProps<any>).isSelected,
+                'card-selected': bulkSelectEnabled && row.getIsSelected(),
                 'bulk-select': bulkSelectEnabled,
               })}
               key={row.id}
-              onClick={e =>
-                handleClick(
-                  e,
-                  (row as Row & UseRowSelectRowProps<any>).toggleRowSelected,
-                )
-              }
+              onClick={e => handleClick(e, row.toggleSelected)}
               role="none"
             >
               {renderCard({ ...row.original, loading })}

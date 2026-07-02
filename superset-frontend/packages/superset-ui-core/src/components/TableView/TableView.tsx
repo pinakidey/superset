@@ -19,9 +19,17 @@
 import { memo, useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import { isEqual } from 'lodash-es';
 import { styled } from '@apache-superset/core/theme';
-import { useFilters, useSortBy, useTable } from 'react-table';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  type SortingState,
+  type ColumnDef,
+} from '@tanstack/react-table';
 import { Empty } from '@superset-ui/core/components';
 import TableCollection from '@superset-ui/core/components/TableCollection';
+import { adaptV7ColumnsToV8 } from '@superset-ui/core/components/TableCollection/adaptColumns';
 import { TableSize } from '@superset-ui/core/components/Table';
 import { SortByType, ServerPagination } from './types';
 
@@ -120,41 +128,36 @@ const RawTableView = ({
   const effectivePageSize = initialPageSize ?? DEFAULT_PAGE_SIZE;
   const [pageIndex, setPageIndex] = useState(initialPageIndex ?? 0);
 
-  const initialState = useMemo(
-    () => ({
-      pageSize: effectivePageSize,
-      pageIndex: 0,
-      sortBy: initialSortBy,
-    }),
-    [effectivePageSize, initialSortBy],
-  );
+  const [sorting, setSorting] = useState<SortingState>(initialSortBy);
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    setSortBy,
-    state: { sortBy },
-  } = useTable(
-    {
-      columns,
-      data,
-      initialState,
-      manualPagination: true,
-      manualSortBy: serverPagination,
-      autoResetSortBy: false,
+  const v8Columns = useMemo(() => adaptV7ColumnsToV8(columns), [columns]);
+
+  const table = useReactTable({
+    columns: v8Columns as ColumnDef<Record<string, unknown>>[],
+    data,
+    state: {
+      sorting,
     },
-    useFilters,
-    useSortBy,
-  );
+    onSortingChange: serverPagination ? setSorting : setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: serverPagination ? undefined : getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    manualSorting: serverPagination,
+    enableSortingRemoval: false,
+  });
+
+  const { rows } = table.getRowModel();
+  const headerGroups = table.getHeaderGroups();
 
   const content = useMemo(() => {
     if (!withPagination || serverPagination) return rows;
     const start = pageIndex * effectivePageSize;
     return rows.slice(start, start + effectivePageSize);
   }, [withPagination, serverPagination, rows, pageIndex, effectivePageSize]);
+
+  const setSortBy = useCallback((newSortBy: SortByType) => {
+    setSorting(newSortBy);
+  }, []);
 
   const EmptyWrapperComponent = useMemo(() => {
     switch (emptyWrapperType) {
@@ -238,13 +241,13 @@ const RawTableView = ({
   }, [initialPageIndex, onServerPagination, pageIndex, serverPagination]);
 
   useEffect(() => {
-    if (serverPagination && !isEqual(sortBy, initialSortBy)) {
+    if (serverPagination && !isEqual(sorting, initialSortBy)) {
       onServerPagination({
         pageIndex: 0,
-        sortBy,
+        sortBy: sorting,
       });
     }
-  }, [initialSortBy, onServerPagination, serverPagination, sortBy]);
+  }, [initialSortBy, onServerPagination, serverPagination, sorting]);
 
   // Reset to first page when current page exceeds available pages
   // (e.g., when filtering reduces the data below the current page)
@@ -264,9 +267,7 @@ const RawTableView = ({
   return (
     <TableViewStyles {...props} ref={tableRef}>
       <TableCollection
-        getTableProps={getTableProps}
-        getTableBodyProps={getTableBodyProps}
-        prepareRow={prepareRow}
+        table={table}
         headerGroups={headerGroups}
         rows={content}
         columns={columns}

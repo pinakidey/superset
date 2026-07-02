@@ -24,7 +24,7 @@ import {
   useEffect,
   Ref,
 } from 'react';
-import { Row, FilterValue } from 'react-table';
+import type { Row } from '@tanstack/react-table';
 import { t, tn } from '@apache-superset/core/translation';
 import { Input, type InputRef, Space } from '@superset-ui/core/components';
 import useAsyncState from '../utils/useAsyncState';
@@ -44,7 +44,7 @@ export interface GlobalFilterProps<D extends object> {
   // filter value cannot be `undefined` otherwise React will report component
   // control type undefined error
   filterValue: string;
-  setGlobalFilter: (filterValue: FilterValue) => void;
+  setGlobalFilter: (filterValue: string | undefined) => void;
   searchInput?: ComponentType<SearchInputProps>;
   id?: string;
   serverPagination: boolean;
