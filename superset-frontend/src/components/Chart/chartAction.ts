@@ -486,7 +486,7 @@ const v1ChartDataRequest = async (
     path: '/api/v1/chart/data',
     qs,
     allowDomainSharding,
-  }).toString();
+  });
 
   const querySettings: QuerySettings = {
     ...requestParams,

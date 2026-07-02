@@ -19,7 +19,6 @@
 
 import { useCallback, useEffect, DependencyList } from 'react';
 /* eslint camelcase: 0 */
-import URI from 'urijs';
 import {
   buildQueryContext,
   ensureIsArray,
@@ -142,14 +141,11 @@ export function getAnnotationJsonUrl(
     return null;
   }
 
-  const uri = URI(window.location.search);
-  return uri
-    .pathname(ensureAppRoot('/api/v1/chart/data'))
-    .search({
-      form_data: safeStringify({ slice_id }),
-      force,
-    })
-    .toString();
+  const params = new URLSearchParams({
+    form_data: safeStringify({ slice_id }),
+    force: String(force),
+  });
+  return `${ensureAppRoot('/api/v1/chart/data')}?${params.toString()}`;
 }
 
 export function getURIDirectory(
@@ -177,39 +173,35 @@ export function mountExploreUrl(
   force = false,
   includeAppRoot = true,
 ): string {
-  const uri = new URI('/');
   const directory = getURIDirectory(endpointType, includeAppRoot);
-  const search = uri.search(true) as Record<string, string | number>;
-  Object.keys(extraSearch).forEach(key => {
-    search[key] = extraSearch[key];
+  const params = new URLSearchParams();
+  Object.entries(extraSearch).forEach(([key, value]) => {
+    params.set(key, String(value));
   });
   if (endpointType === URL_PARAMS.standalone.name) {
     if (force) {
-      search.force = '1';
+      params.set('force', '1');
     }
-    search.standalone = DashboardStandaloneMode.HideNav;
+    params.set('standalone', String(DashboardStandaloneMode.HideNav));
   }
-  return uri.directory(directory).search(search).toString();
+  const qs = params.toString();
+  return qs ? `${directory}?${qs}` : directory;
 }
 
 export function getChartDataUri({
   path,
   qs,
   allowDomainSharding = false,
-}: ChartDataUriParams): URI {
-  // The search params from the window.location are carried through,
-  // but can be specified with curUrl (used for unit tests to spoof
-  // the window.location).
-  let uri = new URI({
-    protocol: window.location.protocol.slice(0, -1),
-    hostname: getHostName(allowDomainSharding),
-    port: window.location.port ? window.location.port : '',
-    path: ensureAppRoot(path),
-  });
+}: ChartDataUriParams): string {
+  const protocol = window.location.protocol;
+  const hostname = getHostName(allowDomainSharding);
+  const port = window.location.port ? `:${window.location.port}` : '';
+  const basePath = ensureAppRoot(path);
   if (qs) {
-    uri = uri.search(qs);
+    const params = new URLSearchParams(qs);
+    return `${protocol}//${hostname}${port}${basePath}?${params.toString()}`;
   }
-  return uri;
+  return `${protocol}//${hostname}${port}${basePath}`;
 }
 
 /**
@@ -236,20 +228,28 @@ export function getExploreUrl({
   // eslint-disable-next-line no-param-reassign
   delete formData.label_colors;
 
-  let uri = relative
-    ? new URI('/')
-    : getChartDataUri({
-        path: '/',
-        allowDomainSharding,
-      });
-  if (curUrl) {
-    uri = URI(URI(curUrl).search());
+  // Determine origin prefix for absolute URLs
+  let origin = '';
+  if (!relative && !curUrl) {
+    const protocol = window.location.protocol;
+    const hostname = getHostName(allowDomainSharding);
+    const port = window.location.port ? `:${window.location.port}` : '';
+    origin = `${protocol}//${hostname}${port}`;
   }
 
   const directory = getURIDirectory(endpointType, includeAppRoot);
 
   // Building the querystring (search) part of the URI
-  const search = uri.search(true) as Record<string, string>;
+  const search: Record<string, string> = {};
+  if (curUrl) {
+    const qIndex = curUrl.indexOf('?');
+    if (qIndex >= 0) {
+      const curParams = new URLSearchParams(curUrl.substring(qIndex + 1));
+      curParams.forEach((value, key) => {
+        search[key] = value;
+      });
+    }
+  }
   const { slice_id, extra_filters, adhoc_filters, viz_type } = formData;
   if (slice_id) {
     const form_data: Record<string, unknown> = { slice_id };
@@ -293,7 +293,9 @@ export function getExploreUrl({
       }
     });
   }
-  return uri.search(search).directory(directory).toString();
+  const params = new URLSearchParams(search);
+  const qs = params.toString();
+  return qs ? `${origin}${directory}?${qs}` : `${origin}${directory}`;
 }
 
 export const getQuerySettings = (

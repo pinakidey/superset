@@ -28,56 +28,29 @@ describe('Get ChartUri', () => {
   );
 
   test('Get ChartUri when allowDomainSharding:false', () => {
-    expect(
-      getChartDataUri({
-        path: '/path',
-        qs: { key: 'same-string' },
-        allowDomainSharding: false,
-      }),
-    ).toEqual({
-      _deferred_build: true,
-      _parts: {
-        duplicateQueryParameters: false,
-        escapeQuerySpace: true,
-        fragment: null,
-        hostname: 'localhost',
-        password: null,
-        path: '/prefix/path',
-        port: '',
-        preventInvalidHostname: false,
-        protocol: 'http',
-        query: 'key=same-string',
-        urn: null,
-        username: null,
-      },
-      _string: '',
+    const result = getChartDataUri({
+      path: '/path',
+      qs: { key: 'same-string' },
+      allowDomainSharding: false,
     });
+    expect(result).toBe('http://localhost/prefix/path?key=same-string');
   });
 
   test('Get ChartUri when allowDomainSharding:true', () => {
-    expect(
-      getChartDataUri({
-        path: '/path-allowDomainSharding-true',
-        qs: { key: 'allowDomainSharding-true' },
-        allowDomainSharding: true,
-      }),
-    ).toEqual({
-      _deferred_build: true,
-      _parts: {
-        duplicateQueryParameters: false,
-        escapeQuerySpace: true,
-        fragment: null,
-        hostname: undefined,
-        password: null,
-        path: '/prefix/path-allowDomainSharding-true',
-        port: '',
-        preventInvalidHostname: false,
-        protocol: 'http',
-        query: 'key=allowDomainSharding-true',
-        urn: null,
-        username: null,
-      },
-      _string: '',
+    const result = getChartDataUri({
+      path: '/path-allowDomainSharding-true',
+      qs: { key: 'allowDomainSharding-true' },
+      allowDomainSharding: true,
     });
+    expect(result).toContain('/prefix/path-allowDomainSharding-true');
+    expect(result).toContain('key=allowDomainSharding-true');
+  });
+
+  test('Get ChartUri without query string', () => {
+    const result = getChartDataUri({
+      path: '/path',
+      allowDomainSharding: false,
+    });
+    expect(result).toBe('http://localhost/prefix/path');
   });
 });

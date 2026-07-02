@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import URI from 'urijs';
 import { JsonObject } from '@superset-ui/core';
 import { safeStringify } from './safeStringify';
 
@@ -36,23 +35,23 @@ export function getExploreLongUrl(
   formData: JsonObject,
   endpointType: string,
   allowOverflow = true,
-  extraSearch: Record<string, any> = {},
+  extraSearch: Record<string, string | null> = {},
 ): string | undefined {
   if (!formData.datasource) {
     return undefined;
   }
 
-  const uri = new URI('/');
   const directory = getURIDirectory(endpointType);
-  const search = uri.search(true);
-  Object.keys(extraSearch).forEach(key => {
-    search[key] = extraSearch[key];
+  const params = new URLSearchParams();
+  Object.entries(extraSearch).forEach(([key, value]) => {
+    params.set(key, String(value));
   });
-  search.form_data = safeStringify(formData);
+  params.set('form_data', safeStringify(formData));
   if (endpointType === 'standalone') {
-    search.standalone = 'true';
+    params.set('standalone', 'true');
   }
-  const url = uri.directory(directory).search(search).toString();
+  const qs = params.toString();
+  const url = qs ? `${directory}?${qs}` : directory;
   if (!allowOverflow && url.length > MAX_URL_LENGTH) {
     const minimalFormData = {
       datasource: formData.datasource,

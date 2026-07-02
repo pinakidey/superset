@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import URI from 'urijs';
 import fetchMock from 'fetch-mock';
 
 import {
@@ -123,9 +122,13 @@ describe('chart actions', () => {
       .mockImplementation(() => MOCK_URL);
     getChartDataUriStub = jest
       .spyOn(exploreUtils, 'getChartDataUri')
-      .mockImplementation(({ qs }: { qs?: Record<string, unknown> }) =>
-        URI(MOCK_URL).query(qs || {}),
-      );
+      .mockImplementation(({ qs }: { qs?: Record<string, string> }) => {
+        if (qs && Object.keys(qs).length > 0) {
+          const params = new URLSearchParams(qs);
+          return `${MOCK_URL}?${params.toString()}`;
+        }
+        return MOCK_URL;
+      });
     buildV1ChartDataPayloadStub = jest
       .spyOn(exploreUtils, 'buildV1ChartDataPayload')
       .mockResolvedValue({
@@ -358,7 +361,7 @@ describe('chart actions', () => {
       });
       getChartDataUriStub = jest
         .spyOn(exploreUtils, 'getChartDataUri')
-        .mockImplementation(() => URI(mockBigIntUrl));
+        .mockImplementation(() => mockBigIntUrl);
 
       const { json } = await actions.getChartDataRequest({
         formData: fakeMetadata as QueryFormData,

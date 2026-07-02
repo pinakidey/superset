@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import URI from 'urijs';
 import {
   buildV1ChartDataPayload,
   exploreChart,
@@ -40,8 +39,8 @@ describe('exploreUtils', () => {
     datasource: '1__table',
     viz_type: 'table',
   };
-  function compareURI(uri1: URI, uri2: URI): void {
-    expect(uri1.toString()).toBe(uri2.toString());
+  function compareURL(url1: string, url2: string): void {
+    expect(url1).toBe(url2);
   }
 
   // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
@@ -57,7 +56,7 @@ describe('exploreUtils', () => {
         force: false,
         curUrl: 'http://superset.com',
       });
-      compareURI(URI(url!), URI('/explore/'));
+      compareURL(url!, '/explore/');
     });
     test('generates proper json url', () => {
       const url = getExploreUrl({
@@ -66,7 +65,7 @@ describe('exploreUtils', () => {
         force: false,
         curUrl: 'http://superset.com',
       });
-      compareURI(URI(url!), URI('/superset/explore_json/'));
+      compareURL(url!, '/superset/explore_json/');
     });
     test('generates proper json forced url', () => {
       const url = getExploreUrl({
@@ -75,10 +74,7 @@ describe('exploreUtils', () => {
         force: true,
         curUrl: 'superset.com',
       });
-      compareURI(
-        URI(url!),
-        URI('/superset/explore_json/').search({ force: 'true' }),
-      );
+      compareURL(url!, '/superset/explore_json/?force=true');
     });
     test('generates proper csv URL', () => {
       const url = getExploreUrl({
@@ -87,10 +83,7 @@ describe('exploreUtils', () => {
         force: false,
         curUrl: 'superset.com',
       });
-      compareURI(
-        URI(url!),
-        URI('/superset/explore_json/').search({ csv: 'true' }),
-      );
+      compareURL(url!, '/superset/explore_json/?csv=true');
     });
     test('generates proper standalone URL', () => {
       const url = getExploreUrl({
@@ -99,11 +92,9 @@ describe('exploreUtils', () => {
         force: false,
         curUrl: 'superset.com',
       });
-      compareURI(
-        URI(url!),
-        URI('/explore/').search({
-          standalone: DashboardStandaloneMode.HideNav,
-        }),
+      compareURL(
+        url!,
+        `/explore/?standalone=${DashboardStandaloneMode.HideNav}`,
       );
     });
     test('preserves main URLs params', () => {
@@ -113,10 +104,7 @@ describe('exploreUtils', () => {
         force: false,
         curUrl: 'superset.com?foo=bar',
       });
-      compareURI(
-        URI(url!),
-        URI('/superset/explore_json/').search({ foo: 'bar' }),
-      );
+      compareURL(url!, '/superset/explore_json/?foo=bar');
     });
     test('generate proper save slice url', () => {
       const url = getExploreUrl({
@@ -125,10 +113,7 @@ describe('exploreUtils', () => {
         force: false,
         curUrl: 'superset.com?foo=bar',
       });
-      compareURI(
-        URI(url!),
-        URI('/superset/explore_json/').search({ foo: 'bar' }),
-      );
+      compareURL(url!, '/superset/explore_json/?foo=bar');
     });
   });
 
