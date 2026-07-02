@@ -18,7 +18,6 @@
  */
 // @ts-nocheck -- vendor file; not fully typed
 /* eslint camelcase: 0 */
-import URI from 'urijs';
 import safeStringify from 'fast-safe-stringify';
 
 const MAX_URL_LENGTH = 8000;
@@ -43,17 +42,17 @@ export function getExploreLongUrl(
     return null;
   }
 
-  const uri = new URI('/');
   const directory = getURIDirectory(formData, endpointType);
-  const search = uri.search(true);
-  Object.keys(extraSearch).forEach(key => {
-    search[key] = extraSearch[key];
+  const params = new URLSearchParams();
+  Object.entries(extraSearch).forEach(([key, value]) => {
+    params.set(key, String(value));
   });
-  search.form_data = safeStringify(formData);
+  params.set('form_data', safeStringify(formData));
   if (endpointType === 'standalone') {
-    search.standalone = 'true';
+    params.set('standalone', 'true');
   }
-  const url = uri.directory(directory).search(search).toString();
+  const qs = params.toString();
+  const url = qs ? `${directory}?${qs}` : directory;
   if (!allowOverflow && url.length > MAX_URL_LENGTH) {
     const minimalFormData = {
       datasource: formData.datasource,

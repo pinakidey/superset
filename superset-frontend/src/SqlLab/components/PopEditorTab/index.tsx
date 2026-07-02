@@ -19,7 +19,6 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import URI from 'urijs';
 import { pick } from 'lodash-es';
 import { useComponentDidUpdate } from '@superset-ui/core';
 import { Skeleton } from '@superset-ui/core/components';
@@ -82,7 +81,14 @@ const PopEditorTab: React.FC<{ children?: React.ReactNode }> = ({
     // Popping a new tab based on the querystring
     if (permalink || id || sql || savedQueryId || datasourceKey || queryId) {
       setIsLoading(true);
-      const targetUrl = `${URI(SQL_LAB_URL).query(pick(requestedQuery, Object.keys(restUrlParams)))}`;
+      const pickedParams = pick(requestedQuery, Object.keys(restUrlParams));
+      const params = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(pickedParams).map(([k, v]) => [k, String(v)]),
+        ),
+      );
+      const qs = params.toString();
+      const targetUrl = qs ? `${SQL_LAB_URL}?${qs}` : SQL_LAB_URL;
       setUpdatedUrl(targetUrl);
       if (permalink) {
         dispatch(popPermalink(permalink));
