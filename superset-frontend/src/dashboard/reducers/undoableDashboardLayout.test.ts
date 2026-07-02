@@ -17,7 +17,6 @@
  * under the License.
  */
 import type { AnyAction } from 'redux';
-// eslint-disable-next-line import/named
 import {
   ActionCreators as UndoActionCreators,
   StateWithHistory,
@@ -66,7 +65,7 @@ const makeValidLayout = (
   },
 });
 
-// The frontend locks redux-undo to 1.1.0, whose `clearHistory()` under
+// redux-undo ^1.1.0's `clearHistory()` under
 // `ignoreInitialState` resets `_latestUnfiltered` to null. That makes a rootless
 // layout impossible to push onto `past` through normal layout actions, so the
 // guard's corrupt-history precondition is seeded directly. `makeHistory` mirrors

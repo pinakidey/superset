@@ -17,7 +17,6 @@
  * under the License.
  */
 import { AnyAction, Reducer } from 'redux';
-// eslint-disable-next-line import/named
 import undoable, {
   ActionCreators as UndoActionCreators,
   StateWithHistory,
