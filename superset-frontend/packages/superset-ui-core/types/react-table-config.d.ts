@@ -25,12 +25,13 @@
  */
 import '@tanstack/react-table';
 
-type ColumnSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type ColumnSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
 declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     hidden?: boolean;
     cellProps?: Record<string, unknown>;
+    className?: string;
     size?: ColumnSize;
     disableSortBy?: boolean;
     v7Header?: unknown;
