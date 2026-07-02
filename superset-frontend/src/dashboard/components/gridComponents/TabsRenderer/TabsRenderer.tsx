@@ -20,7 +20,6 @@ import {
   cloneElement,
   memo,
   ReactElement,
-  RefObject,
   useCallback,
   useRef,
   useState,
@@ -98,7 +97,8 @@ export interface TabsRendererProps {
   tabItems: TabItem[];
   editMode: boolean;
   renderHoverMenu?: boolean;
-  tabsDragSourceRef?: RefObject<HTMLDivElement>;
+  tabsDragSourceRef?: ((node: HTMLElement | null) => void) | null;
+  tabsDragListeners?: React.HTMLAttributes<HTMLElement>;
   handleDeleteComponent: () => void;
   tabsComponent: TabsComponent;
   activeKey: string;
@@ -161,6 +161,7 @@ const TabsRenderer = memo<TabsRendererProps>(
     editMode,
     renderHoverMenu = true,
     tabsDragSourceRef,
+    tabsDragListeners,
     handleDeleteComponent,
     tabsComponent,
     activeKey,
@@ -215,7 +216,11 @@ const TabsRenderer = memo<TabsRendererProps>(
         isDragging={isDragging}
       >
         {editMode && renderHoverMenu && tabsDragSourceRef && (
-          <HoverMenu innerRef={tabsDragSourceRef} position="left">
+          <HoverMenu
+            innerRef={tabsDragSourceRef}
+            dragListeners={tabsDragListeners}
+            position="left"
+          >
             <DragHandle position="left" />
             <DeleteComponentButton onDelete={handleDeleteComponent} />
           </HoverMenu>

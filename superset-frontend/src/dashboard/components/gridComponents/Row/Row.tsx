@@ -269,7 +269,13 @@ const Row = memo((props: RowProps) => {
 
   const remainColumnCount = availableColumnCount - occupiedColumnCount;
   const renderChild = useCallback(
-    ({ dragSourceRef }: { dragSourceRef: RefObject<HTMLDivElement> }) => (
+    ({
+        dragSourceRef,
+        dragListeners,
+      }: {
+        dragSourceRef?: (node: HTMLElement | null) => void;
+        dragListeners?: React.HTMLAttributes<HTMLElement>;
+      }) => (
       <WithPopoverMenu
         isFocused={isFocused}
         onChangeFocus={handleChangeFocus}
@@ -287,6 +293,7 @@ const Row = memo((props: RowProps) => {
           <HoverMenu
             onHover={handleMenuHover}
             innerRef={dragSourceRef}
+            dragListeners={dragListeners}
             position="left"
           >
             <DragHandle position="left" />

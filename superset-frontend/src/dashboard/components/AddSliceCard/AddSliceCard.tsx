@@ -176,6 +176,7 @@ const AddSliceCard: FC<{
   innerRef?:
     | RefObject<HTMLDivElement>
     | ((node: HTMLDivElement | null) => void);
+  dragListeners?: React.HTMLAttributes<HTMLElement>;
   isSelected?: boolean;
   lastModified?: string;
   sliceName: string;
@@ -186,6 +187,7 @@ const AddSliceCard: FC<{
   datasourceUrl,
   datasourceName = '-',
   innerRef,
+  dragListeners,
   isSelected = false,
   lastModified,
   sliceName,
@@ -202,7 +204,7 @@ const AddSliceCard: FC<{
   );
 
   return (
-    <div ref={innerRef} style={style}>
+    <div ref={innerRef} style={style} {...dragListeners}>
       <div
         data-test="chart-card"
         css={(theme: Theme) => css`

@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render } from 'spec/helpers/testing-library';
-import { getEmptyImage } from 'react-dnd-html5-backend';
+import { render, screen } from 'spec/helpers/testing-library';
 
 import newComponentFactory from 'src/dashboard/util/newComponentFactory';
+import { CHART_TYPE, ROW_TYPE } from 'src/dashboard/util/componentTypes';
 import {
-  CHART_TYPE,
-  ROW_TYPE,
-  TAB_TYPE,
-} from 'src/dashboard/util/componentTypes';
-import { UnwrappedDragDroppable as DragDroppable } from 'src/dashboard/components/dnd/DragDroppable';
+  DragDroppable,
+  Draggable,
+  Droppable,
+} from 'src/dashboard/components/dnd/DragDroppable';
+import { DashboardDndContextProvider } from 'src/dashboard/components/dnd/DashboardDndContext';
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('DragDroppable', () => {
@@ -36,27 +36,23 @@ describe('DragDroppable', () => {
     depth: 1,
     index: 0,
     disableDragDrop: false,
-    isDragging: false,
-    isDraggingOver: false,
-    isDraggingOverShallow: false,
-    droppableRef: (() => {}) as any,
-    dragSourceRef: (() => {}) as any,
-    dragPreviewRef: (() => {}) as any,
   };
 
-  function setup(overrideProps: Record<string, any> = {}) {
+  function setup(overrideProps: Record<string, unknown> = {}) {
     const defaultChildren = (provided: Record<string, unknown>) => (
       <div data-test="child-content" {...provided}>
         Test Content
       </div>
     );
 
-    const allProps = { ...props, ...overrideProps } as any;
+    const allProps = { ...props, ...overrideProps };
 
     const utils = render(
-      <DragDroppable {...allProps}>
-        {overrideProps.children || defaultChildren}
-      </DragDroppable>,
+      <DashboardDndContextProvider>
+        <DragDroppable {...(allProps as any)}>
+          {overrideProps.children || defaultChildren}
+        </DragDroppable>
+      </DashboardDndContextProvider>,
     );
     return {
       ...utils,
@@ -86,7 +82,6 @@ describe('DragDroppable', () => {
         Test Content
       </div>
     ));
-    const dragSourceRef = () => {};
 
     setup({ children: renderChild, editMode: false });
     expect(renderChild).toHaveBeenCalledWith(
@@ -95,91 +90,13 @@ describe('DragDroppable', () => {
       }),
     );
 
-    setup({ children: renderChild, editMode: true, dragSourceRef });
+    setup({ children: renderChild, editMode: true });
     expect(renderChild).toHaveBeenLastCalledWith(
       expect.objectContaining({
         'data-test': 'dragdroppable-content',
-        dragSourceRef,
+        dragSourceRef: expect.any(Function),
       }),
     );
-  });
-
-  test('should call its child function with "dropIndicatorProps" dependent on editMode and isDraggingOver', () => {
-    const renderChild = jest.fn((provided: Record<string, unknown>) => (
-      <div data-test="child-content" {...provided}>
-        Test Content
-      </div>
-    ));
-
-    // Create a mock component with the dropIndicator state already set
-    class MockDragDroppable extends DragDroppable {
-      constructor(mockProps: ConstructorParameters<typeof DragDroppable>[0]) {
-        super(mockProps);
-        this.state = { dropIndicator: 'DROP_TOP' as any };
-      }
-    }
-
-    render(
-      <MockDragDroppable
-        {...(props as any)}
-        editMode
-        isDraggingOver
-        component={newComponentFactory(TAB_TYPE)}
-      >
-        {renderChild}
-      </MockDragDroppable>,
-    );
-
-    // Verify the last render included dropIndicatorProps
-    expect(
-      renderChild.mock.calls[renderChild.mock.calls.length - 1][0],
-    ).toMatchObject({
-      'data-test': 'dragdroppable-content',
-      dropIndicatorProps: { className: 'drop-indicator' },
-    });
-  });
-
-  test('should call props.dragPreviewRef and props.droppableRef on mount', () => {
-    const dragPreviewRef = jest.fn();
-    const droppableRef = jest.fn();
-
-    setup({ dragPreviewRef, droppableRef });
-    expect(dragPreviewRef).toHaveBeenCalledTimes(1);
-    expect(droppableRef).toHaveBeenCalledTimes(1);
-  });
-
-  test('should handle forbidden drops correctly', () => {
-    const renderChild = jest.fn((provided: Record<string, unknown>) => (
-      <div data-test="child-content" {...provided}>
-        Test Content
-      </div>
-    ));
-
-    class MockDragDroppable extends DragDroppable {
-      constructor(mockProps: ConstructorParameters<typeof DragDroppable>[0]) {
-        super(mockProps);
-        this.state = { dropIndicator: 'DROP_FORBIDDEN' };
-      }
-    }
-
-    render(
-      <MockDragDroppable
-        {...(props as any)}
-        editMode
-        isDraggingOver
-        component={newComponentFactory(TAB_TYPE)}
-      >
-        {renderChild}
-      </MockDragDroppable>,
-    );
-
-    expect(
-      renderChild.mock.calls[renderChild.mock.calls.length - 1][0],
-    ).toMatchObject({
-      dropIndicatorProps: {
-        className: expect.stringContaining('drop-indicator--forbidden'),
-      },
-    });
   });
 
   test('should handle orientation prop correctly', () => {
@@ -190,84 +107,38 @@ describe('DragDroppable', () => {
     expect(container2.firstChild).toHaveClass('dragdroppable-row');
   });
 
-  test('should handle disabled drag and drop', () => {
-    const renderChild = jest.fn((provided: Record<string, unknown>) => (
-      <div data-test="child-content" {...provided}>
-        Test Content
-      </div>
-    ));
+  test('should render the wrapper div with proper test id', () => {
+    setup();
+    expect(screen.getByTestId('dragdroppable-object')).toBeInTheDocument();
+  });
 
-    class MockDragDroppable extends DragDroppable {
-      constructor(mockProps: ConstructorParameters<typeof DragDroppable>[0]) {
-        super(mockProps);
-        this.state = { dropIndicator: 'DROP_TOP' as any };
-      }
-    }
-
+  test('should render Draggable export', () => {
     render(
-      <MockDragDroppable
-        {...(props as any)}
-        editMode
-        isDraggingOver
-        disableDragDrop
-        component={newComponentFactory(TAB_TYPE)}
-      >
-        {renderChild}
-      </MockDragDroppable>,
+      <DashboardDndContextProvider>
+        <Draggable {...(props as any)} editMode>
+          {(provided: Record<string, unknown>) => (
+            <div data-test="child-content" {...provided}>
+              Test Content
+            </div>
+          )}
+        </Draggable>
+      </DashboardDndContextProvider>,
     );
-
-    expect(
-      renderChild.mock.calls[renderChild.mock.calls.length - 1][0],
-    ).toMatchObject({
-      'data-test': 'dragdroppable-content',
-      dropIndicatorProps: null,
-    });
+    expect(screen.getByTestId('dragdroppable-object')).toBeInTheDocument();
   });
 
-  // Later in the file, remove the require and use the imported getEmptyImage
-  test('should handle empty drag preview correctly', () => {
-    const dragPreviewRef = jest.fn();
-
-    setup({
-      dragPreviewRef,
-      useEmptyDragPreview: true,
-    });
-
-    expect(dragPreviewRef).toHaveBeenCalledWith(
-      getEmptyImage(),
-      expect.objectContaining({
-        captureDraggingState: true,
-      }),
+  test('should render Droppable export', () => {
+    render(
+      <DashboardDndContextProvider>
+        <Droppable {...(props as any)} editMode>
+          {(provided: Record<string, unknown>) => (
+            <div data-test="child-content" {...provided}>
+              Test Content
+            </div>
+          )}
+        </Droppable>
+      </DashboardDndContextProvider>,
     );
-  });
-
-  test('should call onDropIndicatorChange when appropriate', () => {
-    const onDropIndicatorChange = jest.fn();
-    const { rerender } = setup({
-      component: newComponentFactory(TAB_TYPE),
-      onDropIndicatorChange,
-    });
-
-    rerender(
-      <DragDroppable
-        {...(props as any)}
-        component={newComponentFactory(TAB_TYPE)}
-        onDropIndicatorChange={onDropIndicatorChange}
-        isDraggingOver
-        editMode
-      >
-        {(provided: Record<string, unknown>) => (
-          <div data-test="child-content" {...provided}>
-            Test Content
-          </div>
-        )}
-      </DragDroppable>,
-    );
-
-    expect(onDropIndicatorChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isDraggingOver: true,
-      }),
-    );
+    expect(screen.getByTestId('dragdroppable-object')).toBeInTheDocument();
   });
 });

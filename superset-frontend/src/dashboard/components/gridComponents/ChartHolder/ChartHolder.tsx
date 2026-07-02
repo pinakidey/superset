@@ -27,7 +27,7 @@ import AnchorLink from 'src/dashboard/components/AnchorLink';
 import Chart from 'src/dashboard/components/gridComponents/Chart';
 import DeleteComponentButton from 'src/dashboard/components/DeleteComponentButton';
 import { Draggable } from 'src/dashboard/components/dnd/DragDroppable';
-import { ConnectDragSource } from 'react-dnd';
+import type { HTMLAttributes } from 'react';
 import HoverMenu from 'src/dashboard/components/menu/HoverMenu';
 import ResizableContainer from 'src/dashboard/components/resizable/ResizableContainer';
 import getChartAndLabelComponentIdFromPath from 'src/dashboard/util/getChartAndLabelComponentIdFromPath';
@@ -242,7 +242,13 @@ const ChartHolder = ({
   }, []);
 
   const renderChild = useCallback(
-    ({ dragSourceRef }: { dragSourceRef?: ConnectDragSource }) => (
+    ({
+        dragSourceRef,
+        dragListeners,
+      }: {
+        dragSourceRef?: (node: HTMLElement | null) => void;
+        dragListeners?: HTMLAttributes<HTMLElement>;
+      }) => (
       <ResizableContainer
         id={component.id}
         adjustableWidth={parentComponent.type === ROW_TYPE}
@@ -261,18 +267,10 @@ const ChartHolder = ({
       >
         <div
           ref={el => {
-            if (typeof dragSourceRef === 'function') {
-              dragSourceRef(el);
-            } else if (
-              dragSourceRef &&
-              Object.prototype.hasOwnProperty.call(dragSourceRef, 'current')
-            ) {
-              (
-                dragSourceRef as React.MutableRefObject<HTMLDivElement | null>
-              ).current = el;
-            }
+            dragSourceRef?.(el);
             chartHolderRef.current = el;
           }}
+          {...dragListeners}
           data-test="dashboard-component-chart-holder"
           style={focusHighlightStyles}
           css={isFullSize ? fullSizeStyle : undefined}

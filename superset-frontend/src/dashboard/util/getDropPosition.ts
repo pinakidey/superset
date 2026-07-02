@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DropTargetMonitor } from 'react-dnd';
 import isValidChild from './isValidChild';
 import { TAB_TYPE, TABS_TYPE } from './componentTypes';
 import type { LayoutItem } from '../types';
@@ -59,15 +58,15 @@ export interface DropTargetComponent {
 
 // We cache the last recorded clientOffset per component in order to
 // have access to it beyond the handleHover phase and into the handleDrop phase
-// of drag-and-drop. we do not have access to it during drop because react-dnd's
-// monitor.getClientOffset() returns null at this point
+// of drag-and-drop.
 let CACHED_CLIENT_OFFSET: Record<string, ClientOffset> = {};
 export function clearDropCache(): void {
   CACHED_CLIENT_OFFSET = {};
 }
 
 export default function getDropPosition(
-  monitor: DropTargetMonitor,
+  clientOffset: ClientOffset | null,
+  draggingItem: { id: string; type: string } | null,
   Component: DropTargetComponent,
 ): DropPosition | null {
   const {
@@ -77,11 +76,6 @@ export default function getDropPosition(
     orientation,
     isDraggingOverShallow,
   } = Component.props;
-
-  const draggingItem = monitor.getItem() as {
-    id: string;
-    type: string;
-  } | null;
 
   // if dropped self on self, do nothing
   if (!draggingItem || draggingItem.id === component.id) {
@@ -124,18 +118,18 @@ export default function getDropPosition(
   }
 
   const refBoundingRect = Component.ref?.getBoundingClientRect();
-  const clientOffset =
-    monitor.getClientOffset() || CACHED_CLIENT_OFFSET[component.id];
+  const resolvedOffset =
+    clientOffset || CACHED_CLIENT_OFFSET[component.id];
 
-  if (!clientOffset || !refBoundingRect) {
+  if (!resolvedOffset || !refBoundingRect) {
     return null;
   }
 
-  CACHED_CLIENT_OFFSET[component.id] = clientOffset;
-  const deltaTop = Math.abs(clientOffset.y - refBoundingRect.top);
-  const deltaBottom = Math.abs(clientOffset.y - refBoundingRect.bottom);
-  const deltaLeft = Math.abs(clientOffset.x - refBoundingRect.left);
-  const deltaRight = Math.abs(clientOffset.x - refBoundingRect.right);
+  CACHED_CLIENT_OFFSET[component.id] = resolvedOffset;
+  const deltaTop = Math.abs(resolvedOffset.y - refBoundingRect.top);
+  const deltaBottom = Math.abs(resolvedOffset.y - refBoundingRect.bottom);
+  const deltaLeft = Math.abs(resolvedOffset.x - refBoundingRect.left);
+  const deltaRight = Math.abs(resolvedOffset.x - refBoundingRect.right);
 
   // Most of the time we only want a drop indicator for shallow (top-level, non-nested) drop targets
   // However there are some cases where considering only shallow targets would result in NO drop
@@ -162,11 +156,11 @@ export default function getDropPosition(
       const refMiddleX =
         refBoundingRect.left +
         (refBoundingRect.right - refBoundingRect.left) / 2;
-      return clientOffset.x < refMiddleX ? DROP_LEFT : DROP_RIGHT;
+      return resolvedOffset.x < refMiddleX ? DROP_LEFT : DROP_RIGHT;
     }
     const refMiddleY =
       refBoundingRect.top + (refBoundingRect.bottom - refBoundingRect.top) / 2;
-    return clientOffset.y < refMiddleY ? DROP_TOP : DROP_BOTTOM;
+    return resolvedOffset.y < refMiddleY ? DROP_TOP : DROP_BOTTOM;
   }
 
   // either is valid, so choose location based on boundary deltas

@@ -19,8 +19,7 @@
 
 import { render, screen } from 'spec/helpers/testing-library';
 
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { DashboardDndContextProvider } from 'src/dashboard/components/dnd/DashboardDndContext';
 import DraggableNewComponent from 'src/dashboard/components/gridComponents/new/DraggableNewComponent';
 import { CHART_TYPE } from 'src/dashboard/util/componentTypes';
 
@@ -36,10 +35,9 @@ describe('DraggableNewComponent', () => {
 
   function setup(overrideProps: Record<string, unknown> = {}) {
     return render(
-      // @ts-expect-error react-dnd types not updated for React 18
-      <DndProvider backend={HTML5Backend}>
+      <DashboardDndContextProvider>
         <DraggableNewComponent {...props} {...overrideProps} />
-      </DndProvider>,
+      </DashboardDndContextProvider>,
     );
   }
 

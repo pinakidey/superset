@@ -23,7 +23,7 @@ import backgroundStyleOptions from 'src/dashboard/util/backgroundStyleOptions';
 import cx from 'classnames';
 import { shallowEqual, useSelector } from 'react-redux';
 import { ResizeCallback, ResizeStartCallback } from 're-resizable';
-import type { ConnectDragSource } from 'react-dnd';
+import type { HTMLAttributes } from 'react';
 import { Draggable } from '../../dnd/DragDroppable';
 import { COLUMN_TYPE, ROW_TYPE } from '../../../util/componentTypes';
 import WithPopoverMenu from '../../menu/WithPopoverMenu';
@@ -119,7 +119,13 @@ const DynamicComponent: FC<DynamicComponentProps> = ({
       onDrop={handleComponentDrop}
       editMode={editMode}
     >
-      {({ dragSourceRef }: { dragSourceRef: ConnectDragSource }) => (
+      {({
+        dragSourceRef,
+        dragListeners,
+      }: {
+        dragSourceRef?: (node: HTMLElement | null) => void;
+        dragListeners?: HTMLAttributes<HTMLElement>;
+      }) => (
         <WithPopoverMenu
           menuItems={[
             <BackgroundStyleDropdown
@@ -159,6 +165,7 @@ const DynamicComponent: FC<DynamicComponentProps> = ({
             >
               <div
                 ref={dragSourceRef}
+                {...dragListeners}
                 className="dashboard-component"
                 data-test="dashboard-component-chart-holder"
               >

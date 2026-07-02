@@ -35,9 +35,8 @@ import { SupersetThemeProvider } from 'src/theme/ThemeProvider';
 import { ThemeController } from 'src/theme/ThemeController';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndContext } from '@dnd-kit/core';
+import { DashboardDndContextProvider } from 'src/dashboard/components/dnd/DashboardDndContext';
 import reducerIndex from 'spec/helpers/reducerIndex';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
@@ -48,7 +47,7 @@ import userEvent from '@testing-library/user-event';
 type Options = Omit<RenderOptions, 'queries'> & {
   useRedux?: boolean;
   useDnd?: boolean;
-  useDndKit?: boolean; // Use @dnd-kit instead of react-dnd
+  useDndKit?: boolean;
   useQueryParams?: boolean;
   useRouter?: boolean;
   useTheme?: boolean;
@@ -104,8 +103,9 @@ export function createWrapper(options?: Options) {
     }
 
     if (useDnd) {
-      // @ts-ignore react-dnd's DndProviderProps omits `children` under React 18 types
-      result = <DndProvider backend={HTML5Backend}>{result}</DndProvider>;
+      result = (
+        <DashboardDndContextProvider>{result}</DashboardDndContextProvider>
+      );
     }
 
     if (useRedux || store) {

@@ -145,7 +145,8 @@ interface DragDropChildProps {
   dropIndicatorProps?: {
     className: string;
   } | null;
-  dragSourceRef?: Ref<HTMLDivElement>;
+  dragSourceRef?: (node: HTMLElement | null) => void;
+  dragListeners?: React.HTMLAttributes<HTMLElement>;
   draggingTabOnTab?: boolean;
 }
 
@@ -424,6 +425,7 @@ const Tab = (props: TabProps): ReactElement => {
     ({
       dropIndicatorProps,
       dragSourceRef,
+      dragListeners,
       draggingTabOnTab,
     }: DragDropChildProps) => {
       const {
@@ -441,6 +443,7 @@ const Tab = (props: TabProps): ReactElement => {
           isHighlighted={isHighlighted}
           className="dragdroppable-tab"
           ref={dragSourceRef}
+          {...dragListeners}
         >
           <EditableTitle
             title={component.meta.text}

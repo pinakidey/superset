@@ -21,8 +21,7 @@ import { getExtensionsRegistry } from '@superset-ui/core';
 import { Provider as ReduxProvider } from 'react-redux';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { DashboardDndContextProvider } from 'src/dashboard/components/dnd/DashboardDndContext';
 import { DynamicPluginProvider } from 'src/components';
 import { EmbeddedUiConfigProvider } from 'src/components/UiConfigContext';
 import { SupersetThemeProvider } from 'src/theme/ThemeProvider';
@@ -44,8 +43,7 @@ export const RootContextProviders: React.FC<{ children?: React.ReactNode }> = ({
   return (
     <SupersetThemeProvider themeController={themeController}>
       <ReduxProvider store={store}>
-        {/* @ts-expect-error react-dnd types not updated for React 18 */}
-        <DndProvider backend={HTML5Backend}>
+        <DashboardDndContextProvider>
           <EmbeddedUiConfigProvider>
             <DynamicPluginProvider>
               <QueryParamProvider
@@ -66,7 +64,7 @@ export const RootContextProviders: React.FC<{ children?: React.ReactNode }> = ({
               </QueryParamProvider>
             </DynamicPluginProvider>
           </EmbeddedUiConfigProvider>
-        </DndProvider>
+        </DashboardDndContextProvider>
       </ReduxProvider>
     </SupersetThemeProvider>
   );

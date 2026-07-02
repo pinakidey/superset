@@ -50,7 +50,7 @@ import { debounce, pickBy } from 'lodash-es';
 import { Dispatch } from 'redux';
 import { Slice } from 'src/dashboard/types';
 import { navigateTo } from 'src/utils/navigationUtils';
-import type { ConnectDragSource } from 'react-dnd';
+import type { HTMLAttributes } from 'react';
 import AddSliceCard from './AddSliceCard';
 import AddSliceDragPreview from './dnd/AddSliceDragPreview';
 import { DragDroppable } from './dnd/DragDroppable';
@@ -345,9 +345,16 @@ function SliceAdder({
           // actual style should be applied to nested AddSliceCard component
           style={{}}
         >
-          {({ dragSourceRef }: { dragSourceRef: ConnectDragSource }) => (
+          {({
+            dragSourceRef,
+            dragListeners,
+          }: {
+            dragSourceRef?: (node: HTMLElement | null) => void;
+            dragListeners?: HTMLAttributes<HTMLElement>;
+          }) => (
             <AddSliceCard
               innerRef={dragSourceRef}
+              dragListeners={dragListeners}
               style={style}
               sliceName={cellData.slice_name}
               lastModified={cellData.changed_on_humanized}

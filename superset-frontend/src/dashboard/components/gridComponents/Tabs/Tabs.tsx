@@ -114,7 +114,8 @@ const CloseIconWithDropIndicator = (
 );
 
 interface DraggableChildProps {
-  dragSourceRef: React.RefObject<HTMLDivElement>;
+  dragSourceRef?: (node: HTMLElement | null) => void;
+  dragListeners?: React.HTMLAttributes<HTMLElement>;
 }
 
 const Tabs = (props: TabsProps): ReactElement => {
@@ -529,12 +530,16 @@ const Tabs = (props: TabsProps): ReactElement => {
   );
 
   const renderChild = useCallback(
-    ({ dragSourceRef: tabsDragSourceRef }: DraggableChildProps) => (
+    ({
+        dragSourceRef: tabsDragSourceRef,
+        dragListeners: tabsDragListeners,
+      }: DraggableChildProps) => (
       <TabsRenderer
         tabItems={tabItems}
         editMode={editMode}
         renderHoverMenu={renderHoverMenu}
         tabsDragSourceRef={tabsDragSourceRef}
+        tabsDragListeners={tabsDragListeners}
         handleDeleteComponent={handleDeleteComponent}
         tabsComponent={tabsComponent}
         activeKey={activeKey}

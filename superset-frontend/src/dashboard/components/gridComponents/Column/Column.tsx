@@ -67,7 +67,8 @@ export interface ColumnProps {
 }
 
 interface DragChildProps {
-  dragSourceRef: React.RefCallback<HTMLElement>;
+  dragSourceRef?: (node: HTMLElement | null) => void;
+  dragListeners?: React.HTMLAttributes<HTMLElement>;
 }
 
 const ColumnStyles = styled.div<{ editMode: boolean }>`
@@ -199,7 +200,7 @@ const Column = (props: ColumnProps) => {
   );
 
   const renderChild = useCallback(
-    ({ dragSourceRef }: DragChildProps) => (
+    ({ dragSourceRef, dragListeners }: DragChildProps) => (
       <ResizableContainer
         id={columnComponent.id}
         adjustableWidth
@@ -235,9 +236,8 @@ const Column = (props: ColumnProps) => {
         >
           {editMode && (
             <HoverMenu
-              innerRef={
-                dragSourceRef as unknown as React.RefObject<HTMLDivElement>
-              }
+              innerRef={dragSourceRef}
+              dragListeners={dragListeners}
               position="top"
             >
               <DragHandle position="top" />
