@@ -1041,7 +1041,7 @@ export default function TableChart<D extends DataRecord = DataRecord>(
         enableSorting: true,
         cell: (info: { getValue: () => unknown; row: Row<D> }) => {
           const value = info.getValue() as DataRecordValue;
-          const row = info.row;
+          const {row} = info;
           const [isHtml, text] = formatColumnValue(column, value, row.original);
           const html = isHtml && allowRenderHtml ? { __html: text } : undefined;
 

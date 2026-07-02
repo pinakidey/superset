@@ -146,7 +146,7 @@ const RawTableView = ({
     enableSortingRemoval: false,
   });
 
-  const rows = table.getRowModel().rows;
+  const {rows} = table.getRowModel();
   const headerGroups = table.getHeaderGroups();
   const sortBy = sorting;
 
