@@ -164,7 +164,7 @@ export default typedMemo(function DataTable<D extends object>({
 
   const [sorting, setSorting] = useState<SortingState>(
     serverPagination
-      ? sortByFromParent.map(s => ({ id: s.id, desc: s.desc }))
+      ? sortByFromParent.map(s => ({ id: s.id, desc: s.desc ?? false }))
       : sortByRef.current,
   );
   const [globalFilter, setGlobalFilter] = useState<string>('');
