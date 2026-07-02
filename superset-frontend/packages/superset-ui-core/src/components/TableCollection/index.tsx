@@ -17,30 +17,27 @@
  * under the License.
  */
 import { HTMLAttributes, memo, useMemo, useCallback } from 'react';
-import {
-  ColumnInstance,
+import type {
+  Column,
   HeaderGroup,
   Row,
-  SortingRule,
-  TableBodyPropGetter,
-  TablePropGetter,
-} from 'react-table';
+  SortingState,
+  Table as ReactTable,
+} from '@tanstack/react-table';
 import { styled } from '@apache-superset/core/theme';
 import { Table, TableSize } from '@superset-ui/core/components/Table';
 import { TableRowSelection, SorterResult } from 'antd/es/table/interface';
 import { mapColumns, mapRows } from './utils';
 
 export interface TableCollectionProps<T extends object> {
-  getTableProps: TablePropGetter<T>;
-  getTableBodyProps: TableBodyPropGetter<T>;
-  prepareRow: (row: Row<T>) => void;
+  table?: ReactTable<T>;
   headerGroups: HeaderGroup<T>[];
   rows: Row<T>[];
-  columns: ColumnInstance<T>[];
+  columns: Column<T, unknown>[] | Record<string, unknown>[];
   loading: boolean;
   highlightRowId?: number;
   columnsForWrapText?: string[];
-  setSortBy?: (updater: SortingRule<T>[]) => void;
+  setSortBy?: (updater: SortingState) => void;
   bulkSelectEnabled?: boolean;
   selectedFlatRows?: Row<T>[];
   toggleRowSelected?: (rowId: string, value: boolean) => void;
@@ -158,6 +155,7 @@ const StyledTable = styled(Table)<{
 `;
 
 function TableCollection<T extends object>({
+  table,
   columns,
   rows,
   loading,
@@ -169,7 +167,6 @@ function TableCollection<T extends object>({
   selectedFlatRows = [],
   toggleRowSelected,
   toggleAllRowsSelected,
-  prepareRow,
   sticky,
   size = TableSize.Middle,
   pageIndex = 0,
@@ -180,15 +177,18 @@ function TableCollection<T extends object>({
   showRowCount = true,
   expandable,
 }: TableCollectionProps<T>) {
-  const mappedColumns = useMemo(
-    () => mapColumns<T>(columns, headerGroups, columnsForWrapText),
-    [columns, headerGroups, columnsForWrapText],
+  const runtimeColumns = useMemo(
+    () =>
+      table ? table.getAllFlatColumns() : (columns as Column<T, unknown>[]),
+    [table, columns],
   );
 
-  const mappedRows = useMemo(
-    () => mapRows(rows, prepareRow),
-    [rows, prepareRow],
+  const mappedColumns = useMemo(
+    () => mapColumns<T>(runtimeColumns, headerGroups, columnsForWrapText),
+    [runtimeColumns, headerGroups, columnsForWrapText],
   );
+
+  const mappedRows = useMemo(() => mapRows(rows), [rows]);
 
   const selectedRowKeys = useMemo(
     () => selectedFlatRows?.map(row => row.id) || [],
@@ -208,15 +208,18 @@ function TableCollection<T extends object>({
     // so wrapping per-row checkboxes there is safe.
     return {
       selectedRowKeys,
-      onSelect: (record, selected) => {
-        toggleRowSelected?.(record.rowId, selected);
+      onSelect: (record: Record<string, unknown>, selected: boolean) => {
+        toggleRowSelected?.(record.rowId as string, selected);
       },
       onSelectAll: (selected: boolean) => {
         toggleAllRowsSelected?.(selected);
       },
-      renderCell: (_value, _record, _index, originNode) => (
-        <span data-test="row-select-checkbox">{originNode}</span>
-      ),
+      renderCell: (
+        _value: boolean,
+        _record: Record<string, unknown>,
+        _index: number,
+        originNode: React.ReactNode,
+      ) => <span data-test="row-select-checkbox">{originNode}</span>,
     };
   }, [
     bulkSelectEnabled,
@@ -241,7 +244,7 @@ function TableCollection<T extends object>({
   );
 
   const handleTableChange = useCallback(
-    (_pagination: any, _filters: any, sorter: SorterResult) => {
+    (_pagination: unknown, _filters: unknown, sorter: SorterResult) => {
       if (sorter && sorter.field) {
         // Convert array field back to dot notation for nested fields
         const fieldId = Array.isArray(sorter.field)
@@ -250,10 +253,10 @@ function TableCollection<T extends object>({
 
         setSortBy?.([
           {
-            id: fieldId,
+            id: fieldId as string,
             desc: sorter.order === 'descend',
           },
-        ] as SortingRule<T>[]);
+        ]);
       }
     },
     [setSortBy],
@@ -262,7 +265,7 @@ function TableCollection<T extends object>({
   const paginationConfig = useMemo(() => {
     if (totalCount === 0) return false;
 
-    const config: any = {
+    const config: Record<string, unknown> = {
       pageSize,
       size: 'default' as const,
       showSizeChanger: false,

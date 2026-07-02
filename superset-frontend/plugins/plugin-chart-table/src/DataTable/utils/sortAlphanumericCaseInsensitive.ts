@@ -17,15 +17,15 @@
  * under the License.
  */
 
-import { Row } from 'react-table';
+import type { Row } from '@tanstack/react-table';
 
-export const sortAlphanumericCaseInsensitive = <D extends {}>(
+export const sortAlphanumericCaseInsensitive = <D extends object>(
   rowA: Row<D>,
   rowB: Row<D>,
   columnId: string,
 ) => {
-  const valueA = rowA.values[columnId];
-  const valueB = rowB.values[columnId];
+  const valueA = rowA.getValue(columnId);
+  const valueB = rowB.getValue(columnId);
 
   if (!valueA || typeof valueA !== 'string') {
     return -1;

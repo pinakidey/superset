@@ -402,7 +402,7 @@ const config = {
               'react-dom',
               'redux',
               'react-redux',
-              'react-table',
+              '@tanstack/react-table',
               'react-ace',
               'webpack.*',
               '@?babel.*',

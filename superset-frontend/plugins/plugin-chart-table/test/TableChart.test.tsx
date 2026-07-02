@@ -36,7 +36,12 @@ import {
   SMART_DATE_ID,
   getTimeFormatterForGranularity,
 } from '@superset-ui/core';
-import { CellProps, Column, HeaderProps } from 'react-table';
+import type {
+  CellContext,
+  Column,
+  ColumnDef,
+  HeaderContext,
+} from '@tanstack/react-table';
 import DataTable from '../src/DataTable/DataTable';
 import TableChart, { sanitizeHeaderId } from '../src/TableChart';
 import { GenericDataType } from '@apache-superset/core/common';
@@ -2118,22 +2123,20 @@ describe('plugin-chart-table', () => {
           firstName: string;
         };
 
-        const makeColumns = (): Column<DataRow>[] => [
+        const makeColumns = (): ColumnDef<DataRow, unknown>[] => [
           {
-            Header: ({ column }: HeaderProps<DataRow>) => (
+            header: ({ column }) => (
               <th data-column-name={column.id}>First name</th>
             ),
-            Cell: ({ value }: CellProps<DataRow>) => <td>{value}</td>,
+            cell: info => <td>{String(info.getValue() ?? '')}</td>,
             id: 'firstName',
-            accessor: ((row: DataRow) => row.firstName) as never,
+            accessorFn: (row: DataRow) => row.firstName,
           },
           {
-            Header: ({ column }: HeaderProps<DataRow>) => (
-              <th data-column-name={column.id}>City</th>
-            ),
-            Cell: ({ value }: CellProps<DataRow>) => <td>{value}</td>,
+            header: ({ column }) => <th data-column-name={column.id}>City</th>,
+            cell: info => <td>{String(info.getValue() ?? '')}</td>,
             id: 'city',
-            accessor: ((row: DataRow) => row.city) as never,
+            accessorFn: (row: DataRow) => row.city,
           },
         ];
 
@@ -2184,20 +2187,18 @@ describe('plugin-chart-table', () => {
           firstName: string;
         };
 
-        const makeColumns = (): Column<DataRow>[] => [
+        const makeColumns = (): ColumnDef<DataRow, unknown>[] => [
           {
-            Header: ({ column }: HeaderProps<DataRow>) => (
+            header: ({ column }) => (
               <th data-column-name={column.id}>First name</th>
             ),
-            Cell: ({ value }: CellProps<DataRow>) => <td>{value}</td>,
-            accessor: 'firstName',
+            cell: info => <td>{String(info.getValue() ?? '')}</td>,
+            accessorKey: 'firstName',
           },
           {
-            Header: ({ column }: HeaderProps<DataRow>) => (
-              <th data-column-name={column.id}>City</th>
-            ),
-            Cell: ({ value }: CellProps<DataRow>) => <td>{value}</td>,
-            accessor: 'city',
+            header: ({ column }) => <th data-column-name={column.id}>City</th>,
+            cell: info => <td>{String(info.getValue() ?? '')}</td>,
+            accessorKey: 'city',
           },
         ];
 

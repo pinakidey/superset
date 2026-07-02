@@ -18,13 +18,16 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import {
-  useFilters,
-  usePagination,
-  useRowSelect,
-  useRowState,
-  useSortBy,
-  useTable,
-} from 'react-table';
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  type SortingState,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type RowSelectionState,
+} from '@tanstack/react-table';
 
 import {
   NumberParam,
@@ -47,8 +50,8 @@ import {
 
 // Define custom RisonParam for proper encoding/decoding; note that
 // %, &, +, and # must be encoded to avoid breaking the url
-const RisonParam: QueryParamConfig<string, any> = {
-  encode: (data?: any | null) => {
+const RisonParam: QueryParamConfig<string, string | undefined> = {
+  encode: (data?: Record<string, unknown> | null) => {
     if (data === undefined || data === null) return undefined;
 
     const cleanData = JSON.parse(
@@ -79,12 +82,16 @@ export class ListViewError extends Error {
 }
 
 // removes element from a list, returns new list
-export function removeFromList(list: any[], index: number): any[] {
+export function removeFromList(list: unknown[], index: number): unknown[] {
   return list.filter((_, i) => index !== i);
 }
 
 // apply update to elements of object list, returns new list
-function updateInList(list: any[], index: number, update: any): any[] {
+function updateInList(
+  list: Record<string, unknown>[],
+  index: number,
+  update: Record<string, unknown>,
+): Record<string, unknown>[] {
   const element = list.find((_, i) => index === i);
 
   return [
@@ -143,7 +150,7 @@ export function convertFilters(fts: InternalFilter[]): FilterValue[] {
 
 // convertFilters but to handle new decoded rison format
 export function convertFiltersRison(
-  filterObj: any,
+  filterObj: Record<string, unknown>,
   list: Filter[],
 ): FilterValue[] {
   const filters: FilterValue[] = [];
@@ -153,7 +160,6 @@ export function convertFiltersRison(
     const filter: FilterValue = {
       id,
       value: filterObj[id],
-      // operator: filterObj[id][1], // TODO: can probably get rid of this
     };
 
     refs[id] = filter;
@@ -174,7 +180,10 @@ export function convertFiltersRison(
   return filters;
 }
 
-export function extractInputValue(inputType: Filter['input'], event: any) {
+export function extractInputValue(
+  inputType: Filter['input'],
+  event: { currentTarget: { value: string; checked: boolean } },
+) {
   if (!inputType || inputType === 'text') {
     return event.currentTarget.value;
   }
@@ -186,9 +195,9 @@ export function extractInputValue(inputType: Filter['input'], event: any) {
 }
 
 interface UseListViewConfig {
-  fetchData: (conf: FetchDataConfig) => any;
-  columns: any[];
-  data: any[];
+  fetchData: (conf: FetchDataConfig) => unknown;
+  columns: ColumnDef<Record<string, unknown>, unknown>[];
+  data: Record<string, unknown>[];
   count: number;
   initialPageSize: number;
   initialSort?: SortColumn[];
@@ -224,14 +233,15 @@ export function useListViewState({
     [initialSort, query.sortColumn, query.sortOrder],
   );
 
-  const initialState = {
-    filters: query.filters
-      ? convertFiltersRison(query.filters, initialFilters)
-      : [],
-    pageIndex: query.pageIndex || 0,
-    pageSize: initialPageSize,
-    sortBy: initialSortBy,
-  };
+  const initialFiltersState: ColumnFiltersState = query.filters
+    ? convertFiltersRison(
+        query.filters as Record<string, unknown>,
+        initialFilters,
+      ).map(f => ({
+        id: f.id,
+        value: f.value,
+      }))
+    : [];
 
   const [viewMode, setViewMode] = useState<ViewModeType>(
     (query.viewMode as ViewModeType) ||
@@ -239,50 +249,61 @@ export function useListViewState({
   );
 
   const columnsWithFilter = useMemo(
-    // add exact filter type so filters with falsy values are not filtered out
-    () => columns.map(f => ({ ...f, filter: 'exact' })),
+    () => columns.map(f => ({ ...f, filterFn: 'equals' as const })),
     [columns],
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    canPreviousPage,
-    canNextPage,
-    pageCount,
-    gotoPage,
-    setAllFilters,
-    setSortBy,
-    selectedFlatRows,
-    toggleAllRowsSelected,
-    state: { pageIndex, pageSize, sortBy, filters },
-  } = useTable(
-    {
-      columns: columnsWithFilter,
-      data,
-      disableFilters: true,
-      disableSortRemove: true,
-      initialState: initialState as any,
-      manualFilters: true,
-      manualPagination: true,
-      manualSortBy: true,
-      autoResetFilters: false,
-      pageCount: Math.ceil(count / initialPageSize),
-      ...({ count } as any),
+  const [sorting, setSorting] = useState<SortingState>(initialSortBy);
+  const [columnFilters, setColumnFilters] =
+    useState<ColumnFiltersState>(initialFiltersState);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [pagination, setPagination] = useState({
+    pageIndex: (query.pageIndex as number) || 0,
+    pageSize: initialPageSize,
+  });
+
+  const table = useReactTable({
+    columns: columnsWithFilter,
+    data,
+    state: {
+      sorting,
+      columnFilters,
+      rowSelection,
+      pagination,
     },
-    useFilters,
-    useSortBy,
-    usePagination,
-    useRowState,
-    useRowSelect,
-  ) as any;
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualFiltering: true,
+    manualPagination: true,
+    manualSorting: true,
+    enableSortingRemoval: false,
+    pageCount: Math.ceil(count / initialPageSize),
+    enableRowSelection: true,
+  });
+
+  const headerGroups = table.getHeaderGroups();
+  const rows = table.getRowModel().rows;
+  const pageCount = table.getPageCount();
+  const canPreviousPage = table.getCanPreviousPage();
+  const canNextPage = table.getCanNextPage();
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageSize = table.getState().pagination.pageSize;
+  const sortBy = table.getState().sorting;
+  const filters = table.getState().columnFilters;
+  const selectedFlatRows = table.getSelectedRowModel().rows;
 
   const [internalFilters, setInternalFilters] = useState<InternalFilter[]>(
     query.filters && initialFilters.length
-      ? mergeCreateFilterValues(initialFilters, query.filters)
+      ? mergeCreateFilterValues(
+          initialFilters,
+          query.filters as QueryFilterState,
+        )
       : [],
   );
 
@@ -291,14 +312,13 @@ export function useListViewState({
       setInternalFilters(
         mergeCreateFilterValues(
           initialFilters,
-          query.filters ? query.filters : {},
+          query.filters ? (query.filters as QueryFilterState) : {},
         ),
       );
     }
   }, [initialFilters]);
 
   useEffect(() => {
-    // From internalFilters, produce a simplified obj
     const filterObj: Record<string, InnerFilterValue> = {};
 
     internalFilters.forEach(filter => {
@@ -311,7 +331,7 @@ export function useListViewState({
       }
     });
 
-    const queryParams: any = {
+    const queryParams: Record<string, unknown> = {
       filters: Object.keys(filterObj).length ? filterObj : undefined,
       pageIndex,
     };
@@ -332,31 +352,56 @@ export function useListViewState({
 
     setQuery(queryParams, method);
 
-    fetchData({ pageIndex, pageSize, sortBy, filters });
+    // Convert v8 column filters to the format fetchData expects
+    const filtersForFetch = filters.map(f => ({
+      id: f.id,
+      value: f.value,
+    }));
+    fetchData({ pageIndex, pageSize, sortBy, filters: filtersForFetch });
   }, [fetchData, pageIndex, pageSize, sortBy, filters]);
 
   useEffect(() => {
-    if (!isEqual(initialState.pageIndex, pageIndex)) {
-      gotoPage(initialState.pageIndex);
+    const initialPageIdx = (query.pageIndex as number) || 0;
+    if (!isEqual(initialPageIdx, pageIndex)) {
+      table.setPageIndex(initialPageIdx);
     }
   }, [query]);
 
-  const applyFilterValue = (index: number, value: any) => {
+  const gotoPage = (page: number) => {
+    table.setPageIndex(page);
+  };
+
+  const setAllFilters = (newFilters: FilterValue[]) => {
+    setColumnFilters(newFilters.map(f => ({ id: f.id, value: f.value })));
+  };
+
+  const setSortBy = (newSortBy: SortingState) => {
+    setSorting(newSortBy);
+  };
+
+  const toggleAllRowsSelected = (value?: boolean) => {
+    table.toggleAllRowsSelected(value);
+  };
+
+  const prepareRow = () => {
+    // v8 doesn't need prepareRow - it's a no-op for backward compatibility
+  };
+
+  const applyFilterValue = (index: number, value: unknown) => {
     setInternalFilters(currentInternalFilters => {
-      // skip redundant updates
       if (currentInternalFilters[index].value === value) {
         return currentInternalFilters;
       }
 
       const update = { ...currentInternalFilters[index], value };
       const updatedFilters = updateInList(
-        currentInternalFilters,
+        currentInternalFilters as Record<string, unknown>[],
         index,
-        update,
-      );
+        update as Record<string, unknown>,
+      ) as InternalFilter[];
 
       setAllFilters(convertFilters(updatedFilters));
-      gotoPage(0); // clear pagination on filter
+      gotoPage(0);
       return updatedFilters;
     });
   };
@@ -364,8 +409,8 @@ export function useListViewState({
   return {
     canNextPage,
     canPreviousPage,
-    getTableBodyProps,
-    getTableProps,
+    getTableBodyProps: () => ({}),
+    getTableProps: () => ({}),
     gotoPage,
     headerGroups,
     pageCount,

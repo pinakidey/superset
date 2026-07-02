@@ -28,12 +28,7 @@ import {
   useRef,
 } from 'react';
 
-import {
-  ColumnInstance,
-  ColumnWithLooseAccessor,
-  DefaultSortTypes,
-  Row,
-} from 'react-table';
+import type { Column, ColumnDef, Row } from '@tanstack/react-table';
 import { extent as d3Extent, max as d3Max } from 'd3-array';
 import {
   CaretUpOutlined,
@@ -117,7 +112,7 @@ const ACTION_KEYS = {
 /**
  * Return sortType based on data type
  */
-function getSortTypeByDataType(dataType: GenericDataType): DefaultSortTypes {
+function getSortTypeByDataType(dataType: GenericDataType): string {
   if (dataType === GenericDataType.Temporal) {
     return 'datetime';
   }
@@ -222,11 +217,15 @@ function cellBackground({
   return `${theme.colorSuccess}50`;
 }
 
-function SortIcon<D extends object>({ column }: { column: ColumnInstance<D> }) {
-  const { isSorted, isSortedDesc } = column;
+function SortIcon<D extends object>({
+  column,
+}: {
+  column: Column<D, unknown>;
+}) {
+  const sorted = column.getIsSorted();
   let sortIcon = <ColumnHeightOutlined />;
-  if (isSorted) {
-    sortIcon = isSortedDesc ? <CaretDownOutlined /> : <CaretUpOutlined />;
+  if (sorted) {
+    sortIcon = sorted === 'desc' ? <CaretDownOutlined /> : <CaretUpOutlined />;
   }
   return sortIcon;
 }
@@ -950,7 +949,7 @@ export default function TableChart<D extends DataRecord = DataRecord>(
     (
       column: DataColumnMeta,
       i: number,
-    ): ColumnWithLooseAccessor<D> & {
+    ): ColumnDef<D, unknown> & {
       columnKey: string;
     } => {
       const {
@@ -1036,12 +1035,13 @@ export default function TableChart<D extends DataRecord = DataRecord>(
 
       return {
         id: String(i), // to allow duplicate column keys
-        // must use custom accessor to allow `.` in column names
-        // typing is incorrect in current version of `@types/react-table`
-        // so we ask TS not to check.
         columnKey: key,
-        accessor: ((datum: D) => datum[key]) as never,
-        Cell: ({ value, row }: { value: DataRecordValue; row: Row<D> }) => {
+        accessorFn: (datum: D) => datum[key],
+        sortingFn: getSortTypeByDataType(dataType),
+        enableSorting: true,
+        cell: (info: { getValue: () => unknown; row: Row<D> }) => {
+          const value = info.getValue() as DataRecordValue;
+          const row = info.row;
           const [isHtml, text] = formatColumnValue(column, value, row.original);
           const html = isHtml && allowRenderHtml ? { __html: text } : undefined;
 
@@ -1287,21 +1287,30 @@ export default function TableChart<D extends DataRecord = DataRecord>(
             </StyledCell>
           );
         },
-        Header: ({ column: col, onClick, style, onDragStart, onDrop }) => (
+        header: ({
+          column: col,
+          onClick,
+          onDragStart,
+          onDrop,
+        }: {
+          column: Column<D, unknown>;
+          onClick?: (e: unknown) => void;
+          onDragStart?: (e: DragEvent) => void;
+          onDrop?: (e: DragEvent) => void;
+        }) => (
           <th
+            key={col.id}
             id={`header-${headerId}`}
             title={
               description || t('Shift + Click to sort by multiple columns')
             }
-            className={[className, col.isSorted ? 'is-sorted' : ''].join(' ')}
-            style={{
-              ...sharedStyle,
-              ...style,
-            }}
+            className={[className, col.getIsSorted() ? 'is-sorted' : ''].join(
+              ' ',
+            )}
+            style={sharedStyle}
             onKeyDown={(e: ReactKeyboardEvent<HTMLElement>) => {
-              // programatically sort column on keypress
               if (Object.values(ACTION_KEYS).includes(e.key)) {
-                col.toggleSortBy();
+                col.toggleSorting();
               }
             }}
             role="columnheader button"
@@ -1310,15 +1319,13 @@ export default function TableChart<D extends DataRecord = DataRecord>(
             {...(allowRearrangeColumns && {
               draggable: 'true',
               onDragStart,
-              onDragOver: e => e.preventDefault(),
-              onDragEnter: e => e.preventDefault(),
+              onDragOver: (e: DragEvent) => e.preventDefault(),
+              onDragEnter: (e: DragEvent) => e.preventDefault(),
               onDrop,
             })}
             tabIndex={0}
           >
-            {/* can't use `columnWidth &&` because it may also be zero */}
             {config.columnWidth ? (
-              // column width hint
               <div
                 style={{
                   width: columnWidth,
@@ -1339,7 +1346,7 @@ export default function TableChart<D extends DataRecord = DataRecord>(
           </th>
         ),
 
-        Footer: displayedTotals ? (
+        footer: displayedTotals ? (
           i === 0 ? (
             <th key={`footer-summary-${i}`}>
               <div
@@ -1371,12 +1378,6 @@ export default function TableChart<D extends DataRecord = DataRecord>(
           )
         ) : undefined,
         sortDescFirst: sortDesc,
-        // Metrics and percent metrics always have numeric values; use numeric sort
-        // even if the backend reports the column type as String.
-        sortType:
-          isMetric || isPercentMetric
-            ? 'basic'
-            : getSortTypeByDataType(dataType),
       };
     },
     [
@@ -1443,13 +1444,12 @@ export default function TableChart<D extends DataRecord = DataRecord>(
 
   useEffect(() => {
     const options = (
-      columns as unknown as ColumnWithLooseAccessor &
-        {
-          columnKey: string;
-          sortType?: string;
-        }[]
+      columns as (ColumnDef<D, unknown> & {
+        columnKey: string;
+        sortingFn?: string;
+      })[]
     )
-      .filter(col => col?.sortType === 'alphanumeric')
+      .filter(col => col?.sortingFn === 'alphanumeric')
       .map(column => ({
         value: column.columnKey,
         label: column.columnKey,

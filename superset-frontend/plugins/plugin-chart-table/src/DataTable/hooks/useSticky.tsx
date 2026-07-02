@@ -23,13 +23,13 @@ import {
   useMemo,
   useLayoutEffect,
   useCallback,
+  useState,
   ReactNode,
   ReactElement,
   ComponentPropsWithRef,
   CSSProperties,
   UIEventHandler,
 } from 'react';
-import { TableInstance, Hooks } from 'react-table';
 import { useTheme, css } from '@apache-superset/core/theme';
 import getScrollBarSize from '../utils/getScrollBarSize';
 import needScrollBar from '../utils/needScrollBar';
@@ -58,24 +58,14 @@ export type TableRenderer = () => Table;
 export type GetTableSize = () => Partial<StickyState> | undefined;
 export type SetStickyState = (size?: Partial<StickyState>) => void;
 
-export enum ReducerActions {
-  Init = 'init', // this is from global reducer
-  SetStickyState = 'setStickyState',
-}
-
-export type ReducerAction<
-  T extends string,
-  P extends Record<string, unknown>,
-> = P & { type: T };
-
 export type ColumnWidths = number[];
 
 export interface StickyState {
-  width?: number; // maximum full table width
-  height?: number; // maximum full table height
-  realHeight?: number; // actual table viewport height (header + scrollable area)
-  bodyHeight?: number; // scrollable area height
-  tableHeight?: number; // the full table height
+  width?: number;
+  height?: number;
+  realHeight?: number;
+  bodyHeight?: number;
+  tableHeight?: number;
   columnWidths?: ColumnWidths;
   hasHorizontalScroll?: boolean;
   hasVerticalScroll?: boolean;
@@ -88,9 +78,7 @@ export interface UseStickyTableOptions {
 }
 
 export interface UseStickyInstanceProps {
-  // manipulate DOMs in <table> to make the header sticky
   wrapStickyTable: (renderer: TableRenderer) => ReactNode;
-  // update or recompute the sticky table size
   setStickyState: SetStickyState;
 }
 
@@ -124,7 +112,7 @@ function StickyWrap({
   height: number;
   setStickyState: SetStickyState;
   children: Table;
-  sticky?: StickyState; // current sticky element sizes
+  sticky?: StickyState;
 }) {
   const theme = useTheme();
 
@@ -159,11 +147,11 @@ function StickyWrap({
     return headerRows.props.children.length;
   }, [thead]);
 
-  const theadRef = useRef<HTMLTableSectionElement>(null); // original thead for layout computation
-  const tfootRef = useRef<HTMLTableSectionElement>(null); // original tfoot for layout computation
-  const scrollHeaderRef = useRef<HTMLDivElement>(null); // fixed header
-  const scrollFooterRef = useRef<HTMLDivElement>(null); // fixed footer
-  const scrollBodyRef = useRef<HTMLDivElement>(null); // main body
+  const theadRef = useRef<HTMLTableSectionElement>(null);
+  const tfootRef = useRef<HTMLTableSectionElement>(null);
+  const scrollHeaderRef = useRef<HTMLDivElement>(null);
+  const scrollFooterRef = useRef<HTMLDivElement>(null);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
 
   const scrollBarSize = getScrollBarSize();
   const { bodyHeight, columnWidths, hasVerticalScroll } = sticky;
@@ -173,7 +161,6 @@ function StickyWrap({
     sticky.height !== maxHeight ||
     sticky.setStickyState !== setStickyState;
 
-  // update scrollable area and header column sizes when mounted
   useLayoutEffect(() => {
     if (!theadRef.current) {
       return;
@@ -186,8 +173,6 @@ function StickyWrap({
     }
     const fullTableHeight = (bodyThead.parentNode as HTMLTableElement)
       .clientHeight;
-    // instead of always using the first tr, we use the last one to support
-    // multi-level headers assuming the last one is the more detailed one
     const ths = bodyThead.childNodes?.[bodyThead.childNodes?.length - 1 || 0]
       .childNodes as NodeListOf<HTMLTableHeaderCellElement>;
     const widths = Array.from(ths).map(
@@ -200,8 +185,6 @@ function StickyWrap({
       innerWidth: widths.reduce(sum),
       scrollBarSize,
     });
-    // real container height, include table header, footer and space for
-    // horizontal scroll bar
     const realHeight = Math.min(
       maxHeight,
       hasHorizontalScroll ? fullTableHeight + scrollBarSize : fullTableHeight,
@@ -270,7 +253,6 @@ function StickyWrap({
     );
   }
 
-  // reuse previously column widths, will be updated by `useLayoutEffect` above
   const colWidths = columnWidths?.slice(0, columnCount);
 
   if (colWidths && bodyHeight) {
@@ -379,96 +361,72 @@ function StickyWrap({
   );
 }
 
-function useInstance<D extends object>(instance: TableInstance<D>) {
-  const {
-    dispatch,
-    state: { sticky },
-    data,
-    page,
-    rows,
-    allColumns,
-    getTableSize = () => undefined,
-  } = instance;
+/**
+ * Standalone hook that provides sticky table functionality.
+ * Replaces the v7 plugin-based useSticky.
+ */
+export default function useSticky({
+  data,
+  page,
+  rows,
+  allColumnIds,
+  getTableSize = () => undefined,
+}: {
+  data: unknown[];
+  page: unknown[];
+  rows: unknown[];
+  allColumnIds: string[];
+  getTableSize?: GetTableSize;
+}): UseStickyInstanceProps & UseStickyState {
+  const [sticky, setSticky] = useState<StickyState>({});
 
-  const setStickyState = useCallback(
+  const setStickyState: SetStickyState = useCallback(
     (size?: Partial<StickyState>) => {
-      dispatch({
-        type: ReducerActions.SetStickyState,
-        size,
-      });
+      if (!size) return;
+      setSticky(prev => ({ ...prev, ...size }));
     },
-    // turning pages would also trigger a resize
+    // turning pages also triggers a resize
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, getTableSize, page, rows],
+    [getTableSize, page, rows],
   );
 
-  const useStickyWrap = (renderer: TableRenderer) => {
-    const { width, height }: { width?: number; height?: number } =
-      useMountedMemo(getTableSize, [getTableSize]) || sticky;
-    // only change of data should trigger re-render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const table = useMemo(renderer, [page, rows, allColumns]);
+  const wrapStickyTable = useCallback(
+    (renderer: TableRenderer) => {
+      const { width, height }: { width?: number; height?: number } =
+        useMountedMemo(getTableSize, [getTableSize]) || sticky;
+      // only change of data should trigger re-render
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const table = useMemo(renderer, [page, rows, allColumnIds]);
 
-    useLayoutEffect(() => {
+      useLayoutEffect(() => {
+        if (!width || !height) {
+          setStickyState();
+        }
+      }, [width, height]);
+
       if (!width || !height) {
-        setStickyState();
+        return null;
       }
-    }, [width, height]);
+      if (data.length === 0) {
+        return table;
+      }
+      return (
+        <StickyWrap
+          width={width}
+          height={height}
+          sticky={sticky}
+          setStickyState={setStickyState}
+        >
+          {table}
+        </StickyWrap>
+      );
+    },
+    [sticky, data, page, rows, allColumnIds, getTableSize, setStickyState],
+  );
 
-    if (!width || !height) {
-      return null;
-    }
-    if (data.length === 0) {
-      return table;
-    }
-    return (
-      <StickyWrap
-        width={width}
-        height={height}
-        sticky={sticky}
-        setStickyState={setStickyState}
-      >
-        {table}
-      </StickyWrap>
-    );
-  };
-
-  Object.assign(instance, {
+  return {
+    wrapStickyTable,
     setStickyState,
-    wrapStickyTable: useStickyWrap,
-  });
+    sticky,
+  };
 }
-
-export default function useSticky<D extends object>(hooks: Hooks<D>) {
-  hooks.useInstance.push(useInstance);
-  hooks.stateReducers.push((newState, action_, prevState) => {
-    const action = action_ as ReducerAction<
-      ReducerActions,
-      { size: StickyState }
-    >;
-    if (action.type === ReducerActions.Init) {
-      return {
-        ...newState,
-        sticky: {
-          ...prevState?.sticky,
-        },
-      };
-    }
-    if (action.type === ReducerActions.SetStickyState) {
-      const { size } = action;
-      if (!size) {
-        return { ...newState };
-      }
-      return {
-        ...newState,
-        sticky: {
-          ...prevState?.sticky,
-          ...newState?.sticky,
-          ...action.size,
-        },
-      };
-    }
-    return newState;
-  });
-}
-useSticky.pluginName = 'useSticky';

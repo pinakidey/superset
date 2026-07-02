@@ -28,7 +28,8 @@ import { nanoid } from 'nanoid';
 import { t } from '@apache-superset/core/translation';
 import { styled, css, SupersetTheme } from '@apache-superset/core/theme';
 import { Icons, Button, InfoTooltip } from '@superset-ui/core/components';
-import { FilterValue } from 'react-table';
+// FilterValue was removed in @tanstack/react-table v8; use compatible type
+type FilterValue = unknown[] | null;
 import Table, {
   type ColumnsType,
   type SortOrder,

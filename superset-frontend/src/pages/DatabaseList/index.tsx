@@ -25,7 +25,7 @@ import {
 } from '@superset-ui/core';
 import { css, styled, useTheme } from '@apache-superset/core/theme';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import type { CellProps } from 'react-table';
+import type { CellContext } from '@tanstack/react-table';
 import rison from 'rison';
 import { useSelector } from 'react-redux';
 import { useQueryParams, BooleanParam } from 'use-query-params';
@@ -608,7 +608,7 @@ function DatabaseList({
             <span>{t('AQE')}</span>
           </Tooltip>
         ),
-        Cell: ({ row: { original } }: CellProps<ConnectionItem>) =>
+        Cell: ({ row: { original } }: CellContext<ConnectionItem>) =>
           original.source_type === 'semantic_layer' ? (
             <span>–</span>
           ) : (
@@ -628,7 +628,7 @@ function DatabaseList({
             <span>{t('DML')}</span>
           </Tooltip>
         ),
-        Cell: ({ row: { original } }: CellProps<ConnectionItem>) =>
+        Cell: ({ row: { original } }: CellContext<ConnectionItem>) =>
           original.source_type === 'semantic_layer' ? (
             <span>–</span>
           ) : (
@@ -640,7 +640,7 @@ function DatabaseList({
       {
         accessor: 'allow_file_upload',
         Header: t('File upload'),
-        Cell: ({ row: { original } }: CellProps<ConnectionItem>) =>
+        Cell: ({ row: { original } }: CellContext<ConnectionItem>) =>
           original.source_type === 'semantic_layer' ? (
             <span>–</span>
           ) : (
@@ -652,7 +652,7 @@ function DatabaseList({
       {
         accessor: 'expose_in_sqllab',
         Header: t('Expose in SQL Lab'),
-        Cell: ({ row: { original } }: CellProps<ConnectionItem>) =>
+        Cell: ({ row: { original } }: CellContext<ConnectionItem>) =>
           original.source_type === 'semantic_layer' ? (
             <span>–</span>
           ) : (
@@ -669,7 +669,7 @@ function DatabaseList({
               changed_on_delta_humanized: changedOn,
             },
           },
-        }: CellProps<ConnectionItem>) => (
+        }: CellContext<ConnectionItem>) => (
           <ModifiedInfo date={changedOn || ''} user={changedBy} />
         ),
         Header: t('Last modified'),
@@ -678,7 +678,7 @@ function DatabaseList({
         id: 'changed_on_delta_humanized',
       },
       {
-        Cell: ({ row: { original } }: CellProps<ConnectionItem>) => {
+        Cell: ({ row: { original } }: CellContext<ConnectionItem>) => {
           const isSemanticLayer = original.source_type === 'semantic_layer';
 
           if (isSemanticLayer) {

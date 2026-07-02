@@ -16,11 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useRef, useState } from 'react';
-import { useAsyncDebounce } from 'react-table';
+import { useCallback, useRef, useState } from 'react';
 
-// useAsyncDebounce in dist build of `react-table` requires regeneratorRuntime
-import 'regenerator-runtime/runtime';
+/**
+ * A debounce hook that replaces react-table v7's useAsyncDebounce.
+ * Delays invoking `callback` until `wait` ms after the last call.
+ */
+function useDebounce<T>(callback: (value: T) => unknown, wait: number) {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  return useCallback(
+    (value: T) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(value);
+      }, wait);
+    },
+    [callback, wait],
+  );
+}
 
 /**
  * Hook useState to allow always return latest initialValue
@@ -32,7 +48,7 @@ export default function useAsyncState<T, F extends (newValue: T) => unknown>(
 ) {
   const [value, setValue] = useState(initialValue);
   const valueRef = useRef(initialValue);
-  const onChange = useAsyncDebounce(callback, wait);
+  const onChange = useDebounce(callback, wait);
 
   // sync updated initialValue
   if (valueRef.current !== initialValue) {

@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SortingRule } from 'react-table';
+import type { SortingState } from '@tanstack/react-table';
 
-export type SortByType = SortingRule<string>[];
+export type SortByType = SortingState;
 
 export interface ServerPagination {
   pageIndex: number;
