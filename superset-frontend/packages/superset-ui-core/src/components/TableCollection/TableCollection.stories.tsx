@@ -164,7 +164,7 @@ export const WithRowSelection: StoryFn = () => {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const {rows} = table.getRowModel();
+  const { rows } = table.getRowModel();
 
   const toggleRowSelected = useCallback(
     (rowId: string, selected: boolean) => {

@@ -254,7 +254,7 @@ export default typedMemo(function DataTable<D extends object>({
   const sortedRows = table.getSortedRowModel().rows;
   const page = table.getRowModel().rows;
   const pageCount = table.getPageCount();
-  const {pageIndex} = table.getState().pagination;
+  const { pageIndex } = table.getState().pagination;
   const currentPageSize = table.getState().pagination.pageSize;
   const filterValue = table.getState().globalFilter;
   const sortBy = table.getState().sorting;

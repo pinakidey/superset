@@ -288,12 +288,12 @@ export function useListViewState({
   });
 
   const headerGroups = table.getHeaderGroups();
-  const {rows} = table.getRowModel();
+  const { rows } = table.getRowModel();
   const pageCount = table.getPageCount();
   const canPreviousPage = table.getCanPreviousPage();
   const canNextPage = table.getCanNextPage();
-  const {pageIndex} = table.getState().pagination;
-  const {pageSize} = table.getState().pagination;
+  const { pageIndex } = table.getState().pagination;
+  const { pageSize } = table.getState().pagination;
   const sortBy = table.getState().sorting;
   const filters = table.getState().columnFilters;
   const selectedFlatRows = table.getSelectedRowModel().rows;
