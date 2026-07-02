@@ -32,5 +32,9 @@ declare module '@tanstack/react-table' {
     hidden?: boolean;
     cellProps?: Record<string, unknown>;
     size?: ColumnSize;
+    disableSortBy?: boolean;
+    v7Header?: unknown;
+    v7Cell?: unknown;
+    [key: string]: unknown;
   }
 }

@@ -148,7 +148,6 @@ const RawTableView = ({
 
   const { rows } = table.getRowModel();
   const headerGroups = table.getHeaderGroups();
-  const sortBy = sorting;
 
   const content = useMemo(() => {
     if (!withPagination || serverPagination) return rows;

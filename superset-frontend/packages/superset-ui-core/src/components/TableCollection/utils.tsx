@@ -31,8 +31,6 @@ import { SortOrder } from '../Table';
 
 type TableSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
-type RowWithId<T extends object> = Row<T> & { rowId: string };
-
 const COLUMN_SIZE_MAP: Record<TableSize, number> = {
   xs: 25,
   sm: 50,
@@ -50,7 +48,6 @@ export function mapColumns<T extends object>(
   return columns.map(column => {
     const meta = (column.columnDef.meta ?? {}) as V8ColumnMeta;
     const isSorted = column.getIsSorted();
-    const isSortedAsc = isSorted === 'asc';
     const isSortedDesc = isSorted === 'desc';
 
     return {
