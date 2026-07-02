@@ -31,7 +31,6 @@ import { useDraggable, useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { styled } from '@apache-superset/core/theme';
 import { TAB_TYPE } from 'src/dashboard/util/componentTypes';
 import { DROP_FORBIDDEN } from 'src/dashboard/util/getDropPosition';
-import type { LayoutItem } from 'src/dashboard/types';
 import type { DragItem, DropResult } from './dragDroppableConfig';
 import handleHover from './handleHover';
 import { useDashboardDrag } from './DashboardDndContext';
@@ -43,21 +42,20 @@ const DragDroppableStyles = styled.div`
   }
 `;
 
-interface DropIndicatorProps {
-  className: string;
-}
-
-interface ChildProps {
+export interface ChildProps {
   dragSourceRef?: (node: HTMLElement | null) => void;
   dragListeners?: HTMLAttributes<HTMLElement>;
-  dropIndicatorProps: DropIndicatorProps | null;
+  dropIndicatorProps?: Record<string, string>;
   draggingTabOnTab?: boolean;
-  'data-test': string;
+  'data-test'?: string;
 }
 
-interface DragDroppableOwnProps {
-  component: LayoutItem;
-  parentComponent?: LayoutItem;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DndComponentProp = Record<string, any>;
+
+export interface DragDroppableOwnProps {
+  component: DndComponentProp;
+  parentComponent?: DndComponentProp;
   index: number;
   depth: number;
   disableDragDrop?: boolean;
@@ -115,7 +113,6 @@ function DragDroppableInner({
   const {
     setNodeRef: setDragNodeRef,
     listeners: dragListeners,
-    attributes: dragAttributes,
     isDragging,
   } = useDraggable({
     id: dragId,
@@ -130,7 +127,7 @@ function DragDroppableInner({
     disabled: disableDragDrop || !editMode || !enableDrag,
   });
 
-  const { setNodeRef: setDropNodeRef, isOver } = useDroppable({
+  const { setNodeRef: setDropNodeRef } = useDroppable({
     id: dropId,
     data: {
       component,
@@ -275,7 +272,7 @@ function DragDroppableInner({
   }, [activeId, onDragTab]);
 
   // Compute drop indicator props
-  const dropIndicatorProps: DropIndicatorProps | null = dropIndicator
+  const dropIndicatorProps: Record<string, string> | undefined = dropIndicator
     ? {
         className: cx(
           'drop-indicator',
@@ -283,7 +280,7 @@ function DragDroppableInner({
           `drop-indicator--${dropIndicator}`,
         ),
       }
-    : null;
+    : undefined;
 
   // Determine if we're dragging a tab on a tab
   const draggingTabOnTab =

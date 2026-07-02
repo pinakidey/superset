@@ -16,44 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { LayoutItem, ComponentType } from 'src/dashboard/types';
-
-export interface DragDroppableProps {
-  component: LayoutItem;
-  parentComponent?: LayoutItem;
-  index: number;
-  depth: number;
-  disableDragDrop: boolean;
-  orientation?: 'row' | 'column';
-  isDraggingOverShallow?: boolean;
-  onDrop?: (dropResult: DropResult) => void;
-  onHover?: () => void;
-  dropToChild?: boolean | ((draggingItem: DragItem) => boolean);
-}
-
 export interface DragItem {
-  type: ComponentType;
+  type: string;
   id: string;
-  meta: LayoutItem['meta'];
+  meta?: Record<string, unknown>;
   index: number;
   parentId?: string;
-  parentType?: ComponentType;
+  parentType?: string;
 }
 
 export interface DropResult {
   source: {
     id: string;
-    type: ComponentType;
+    type: string;
     index: number;
   };
   dragging: {
     id: string;
-    type: ComponentType;
-    meta: LayoutItem['meta'];
+    type: string;
+    meta?: Record<string, unknown>;
   };
   destination?: {
     id: string;
-    type: ComponentType;
+    type: string;
     index: number;
   };
   position?: string;
@@ -62,6 +47,17 @@ export interface DropResult {
 export interface DragDroppableComponent {
   mounted: boolean;
   ref?: HTMLElement | null;
-  props: DragDroppableProps;
+  props: {
+    component: { id: string; type: string; [key: string]: unknown };
+    parentComponent?: { id: string; type: string; [key: string]: unknown };
+    index: number;
+    depth: number;
+    disableDragDrop?: boolean;
+    orientation?: 'row' | 'column';
+    isDraggingOverShallow?: boolean;
+    onDrop?: (dropResult: DropResult) => void;
+    onHover?: () => void;
+    dropToChild?: boolean | ((draggingItem: DragItem) => boolean);
+  };
   setState: (stateUpdate: () => { dropIndicator: string | null }) => void;
 }

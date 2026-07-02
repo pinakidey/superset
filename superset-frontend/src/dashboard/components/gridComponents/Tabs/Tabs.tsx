@@ -354,16 +354,10 @@ const Tabs = (props: TabsProps): ReactElement => {
   }, [props.deleteComponent, props.id, props.parentId]);
 
   const handleGetDropPosition = useCallback(
-    (dragObject: {
-      dropIndicator: string | null;
-      isDraggingOver: boolean;
-      index: number;
-    }) => {
-      const { isDraggingOver, index } = dragObject;
-
-      if (isDraggingOver) {
-        setDropPosition(dragObject.dropIndicator);
-        setDragOverTabIndex(index);
+    (dropIndicator: string | null, tabIndex: number) => {
+      if (dropIndicator) {
+        setDropPosition(dropIndicator);
+        setDragOverTabIndex(tabIndex);
       } else {
         setDropPosition(null);
       }

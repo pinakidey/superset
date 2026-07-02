@@ -50,7 +50,7 @@ export interface DashboardGridProps {
 }
 
 interface DropProps {
-  dropIndicatorProps?: Record<string, unknown>;
+  dropIndicatorProps?: Record<string, string>;
 }
 
 const renderDraggableContent = (dropProps: DropProps) =>
@@ -291,7 +291,7 @@ function DashboardGrid({
             <Droppable
               component={gridComponent}
               depth={depth}
-              parentComponent={null}
+              parentComponent={undefined}
               index={0}
               orientation="column"
               onDrop={handleTopDropTargetDrop}
@@ -325,7 +325,7 @@ function DashboardGrid({
                 <Droppable
                   component={gridComponent}
                   depth={depth}
-                  parentComponent={null}
+                  parentComponent={undefined}
                   index={index + 1}
                   orientation="column"
                   onDrop={handleComponentDrop}

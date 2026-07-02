@@ -23,7 +23,6 @@ import {
   useEffect,
   useRef,
   type ReactElement,
-  type Ref,
 } from 'react';
 import classNames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
@@ -67,11 +66,10 @@ export interface TabProps {
   depth: number;
   renderType: typeof RENDER_TAB | typeof RENDER_TAB_CONTENT;
   onDropOnTab: (dropResult: DropResult) => void;
-  onDropPositionChange: (dragObject: {
-    dropIndicator: string | null;
-    isDraggingOver: boolean;
-    index: number;
-  }) => void;
+  onDropPositionChange: (
+    dropIndicator: string | null,
+    tabIndex: number,
+  ) => void;
   onDragTab: (dragComponentId: string | undefined) => void;
   onHoverTab: () => void;
   editMode: boolean;
@@ -484,16 +482,16 @@ const Tab = (props: TabProps): ReactElement => {
     ],
   );
 
+  const handleDropIndicatorChange = useCallback(
+    (dropIndicator: string | null) => {
+      props.onDropPositionChange(dropIndicator, props.index);
+    },
+    [props.onDropPositionChange, props.index],
+  );
+
   const renderTab = useCallback(() => {
-    const {
-      component,
-      parentComponent,
-      index,
-      depth,
-      editMode,
-      onDropPositionChange,
-      onDragTab,
-    } = props;
+    const { component, parentComponent, index, depth, editMode, onDragTab } =
+      props;
 
     return (
       <DragDroppable
@@ -504,7 +502,7 @@ const Tab = (props: TabProps): ReactElement => {
         depth={depth}
         onDrop={handleDrop}
         onHover={handleHoverTab}
-        onDropIndicatorChange={onDropPositionChange}
+        onDropIndicatorChange={handleDropIndicatorChange}
         onDragTab={onDragTab}
         editMode={editMode}
         dropToChild={shouldDropToChild}
@@ -520,6 +518,7 @@ const Tab = (props: TabProps): ReactElement => {
     props.editMode,
     handleDrop,
     handleHoverTab,
+    handleDropIndicatorChange,
     shouldDropToChild,
     renderTabChild,
   ]);

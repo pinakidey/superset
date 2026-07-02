@@ -25,7 +25,6 @@ import {
   useLayoutEffect,
   useMemo,
   memo,
-  RefObject,
 } from 'react';
 import cx from 'classnames';
 import { t } from '@apache-superset/core/translation';
@@ -157,7 +156,9 @@ const Row = memo((props: RowProps) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [hoverMenuHovered, setHoverMenuHovered] = useState(false);
-  const [containerHeight, setContainerHeight] = useState<number | null>(null);
+  const [containerHeight, setContainerHeight] = useState<number | undefined>(
+    undefined,
+  );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isComponentVisibleRef = useRef(isComponentVisible);
 
@@ -342,7 +343,7 @@ const Row = memo((props: RowProps) => {
                 ...(rowItems.length > 0 && { width: 16 }),
               }}
             >
-              {({ dropIndicatorProps }: { dropIndicatorProps: JsonObject }) =>
+              {({ dropIndicatorProps }) =>
                 dropIndicatorProps && <div {...dropIndicatorProps} />
               }
             </Droppable>
@@ -390,11 +391,9 @@ const Row = memo((props: RowProps) => {
                         itemIndex === rowItems.length - 1 && { width: 16 }),
                     }}
                   >
-                    {({
-                      dropIndicatorProps,
-                    }: {
-                      dropIndicatorProps: JsonObject;
-                    }) => dropIndicatorProps && <div {...dropIndicatorProps} />}
+                    {({ dropIndicatorProps }) =>
+                      dropIndicatorProps && <div {...dropIndicatorProps} />
+                    }
                   </Droppable>
                 )}
               </Fragment>

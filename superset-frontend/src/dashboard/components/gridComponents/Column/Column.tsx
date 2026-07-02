@@ -136,7 +136,7 @@ const emptyColumnContentStyles = (theme: SupersetTheme) => css`
 `;
 
 interface DropIndicatorChildProps {
-  dropIndicatorProps?: Record<string, unknown>;
+  dropIndicatorProps?: Record<string, string>;
 }
 
 const Column = (props: ColumnProps) => {

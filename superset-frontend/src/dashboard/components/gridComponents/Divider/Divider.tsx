@@ -87,13 +87,7 @@ function Divider({
       onDrop={handleComponentDrop}
       editMode={editMode}
     >
-      {({
-        dragSourceRef,
-        dragListeners,
-      }: {
-        dragSourceRef: (node: HTMLElement | null) => void;
-        dragListeners?: HTMLAttributes<HTMLElement>;
-      }) => (
+      {({ dragSourceRef, dragListeners }) => (
         <div ref={dragSourceRef} {...dragListeners}>
           {editMode && (
             <HoverMenu position="left">
