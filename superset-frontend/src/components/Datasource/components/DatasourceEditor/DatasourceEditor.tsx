@@ -82,7 +82,7 @@ import {
   formatQuery,
   resetDatabaseState,
 } from 'src/database/actions';
-import Mousetrap from 'mousetrap';
+import useKeyboardShortcuts from 'src/hooks/useKeyboardShortcuts';
 import { clearDatasetCache } from 'src/utils/cachedSupersetGet';
 import { makeUrl } from 'src/utils/pathUtils';
 import {
@@ -1421,7 +1421,7 @@ function DatasourceEditor({
     [],
   );
 
-  // Keep the refs read by the (one-shot) Mousetrap handler up to date.
+  // Keep the refs read by the keyboard shortcut handler up to date.
   const isEditModeRef = useRef(isEditMode);
   const onQueryFormatRef = useRef(onQueryFormat);
   useEffect(() => {
@@ -1429,22 +1429,30 @@ function DatasourceEditor({
     onQueryFormatRef.current = onQueryFormat;
   }, [isEditMode, onQueryFormat]);
 
+  // Bind ctrl+shift+f once and route through refs so we don't
+  // re-register on every SQL-editor keystroke (onQueryFormat's identity
+  // changes with datasource.sql).
+  const formatShortcut = useMemo(
+    () => [
+      {
+        key: 'ctrl+shift+f',
+        func: () => {
+          if (isEditModeRef.current) {
+            onQueryFormatRef.current?.();
+          }
+        },
+      },
+    ],
+    [],
+  );
+  useKeyboardShortcuts(formatShortcut);
+
   // componentDidMount
   useEffect(() => {
     isComponentMounted.current = true;
     // Mark initial mount as complete after first render cycle
     // This prevents useEffect hooks from firing on mount
     isInitialMount.current = false;
-    // Bind ctrl+shift+f once on mount and route through refs so we don't
-    // unbind/rebind on every SQL-editor keystroke (onQueryFormat's identity
-    // changes with datasource.sql).
-    Mousetrap.bind('ctrl+shift+f', e => {
-      e.preventDefault();
-      if (isEditModeRef.current) {
-        onQueryFormatRef.current?.();
-      }
-      return false;
-    });
     fetchUsageData().catch(error => {
       if (error?.name !== 'AbortError') throw error;
     });
@@ -1458,7 +1466,6 @@ function DatasourceEditor({
         if (controller) controller.abort();
       });
 
-      Mousetrap.unbind('ctrl+shift+f');
       resetQuery();
     };
   }, []);
