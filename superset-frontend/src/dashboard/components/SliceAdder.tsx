@@ -20,8 +20,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
-// @ts-expect-error
-import { createFilter } from 'react-search-input';
+
 import { t } from '@apache-superset/core/translation';
 import { styled, css, useTheme } from '@apache-superset/core/theme';
 import {
@@ -75,7 +74,30 @@ export type SliceAdderProps = {
   dashboardId: number;
 };
 
-const KEYS_TO_FILTERS = ['slice_name', 'viz_type', 'datasource_name'];
+const KEYS_TO_FILTERS: (keyof Slice)[] = [
+  'slice_name',
+  'viz_type',
+  'datasource_name',
+];
+
+function matchesSearchFilter(
+  item: Slice,
+  searchTerm: string,
+  keys: (keyof Slice)[],
+): boolean {
+  if (!searchTerm) return true;
+  const terms = searchTerm.toLowerCase().split(' ').filter(Boolean);
+  return terms.every(term =>
+    keys.some(key => {
+      const value = item[key];
+      return (
+        (typeof value === 'string' || typeof value === 'number') &&
+        String(value).toLowerCase().includes(term)
+      );
+    }),
+  );
+}
+
 const KEYS_TO_SORT = {
   slice_name: t('name'),
   viz_type: t('viz type'),
@@ -161,7 +183,7 @@ function getFilteredSortedSlices(
           slice?.created_by?.id === userId
         : true,
     )
-    .filter(createFilter(searchTerm, KEYS_TO_FILTERS))
+    .filter(slice => matchesSearchFilter(slice, searchTerm, KEYS_TO_FILTERS))
     .sort(sortByComparator(sortBy));
 }
 
