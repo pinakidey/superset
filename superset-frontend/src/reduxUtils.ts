@@ -17,8 +17,6 @@
  * under the License.
  */
 import { nanoid } from 'nanoid';
-import { compose } from 'redux';
-import persistState, { StorageAdapter } from 'redux-localstorage';
 import { isEqual, omitBy, omit, isEqualWith } from 'lodash-es';
 import { ensureIsArray } from '@superset-ui/core';
 
@@ -136,30 +134,6 @@ export function extendArr(
     newState[arrKey] = [...state[arrKey], ...newArr];
   }
   return { ...state, ...newState };
-}
-
-export function initEnhancer(
-  persist = true,
-  persistConfig: { paths?: StorageAdapter<unknown>; config?: string } = {},
-  disableDebugger = false,
-) {
-  const { paths, config } = persistConfig;
-  const composeEnhancers =
-    process.env.WEBPACK_MODE === 'development' && disableDebugger !== true
-      ? /* eslint-disable-next-line no-underscore-dangle, dot-notation */
-        window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__' as keyof typeof window]
-        ? /* eslint-disable-next-line no-underscore-dangle, dot-notation */
-          window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__' as keyof typeof window](
-            {
-              trace: true,
-            },
-          )
-        : compose
-      : compose;
-
-  return persist
-    ? composeEnhancers(persistState(paths, config))
-    : composeEnhancers();
 }
 
 export function areArraysShallowEqual(arr1: unknown[], arr2: unknown[]) {
