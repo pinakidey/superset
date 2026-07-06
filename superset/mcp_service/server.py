@@ -870,7 +870,7 @@ def run_server(
 
     if use_factory_config:
         # Use factory configuration for customization
-        logging.info("Creating MCP app from factory configuration...")
+        logger.info("Creating MCP app from factory configuration...")
         factory_config = get_mcp_factory_config()
         mcp_instance = create_mcp_app(**factory_config)
         # Capture the actual auth object so the hello page reflects real auth state
@@ -883,7 +883,7 @@ def run_server(
             _apply_tool_search_transform(mcp_instance, tool_search_config)
     else:
         # Use default initialization with auth from Flask config
-        logging.info("Creating MCP app with default configuration...")
+        logger.info("Creating MCP app with default configuration...")
         from superset.mcp_service.caching import create_response_caching_middleware
         from superset.mcp_service.flask_singleton import get_flask_app
 
@@ -929,11 +929,11 @@ def run_server(
     if not os.environ.get(env_key):
         os.environ[env_key] = "1"
         try:
-            logging.info("Starting FastMCP on %s:%s", host, port)
+            logger.info("Starting FastMCP on %s:%s", host, port)
 
             if event_store is not None:
                 # Multi-pod: Use http_app with Redis EventStore, run with uvicorn
-                logging.info("Running in multi-pod mode with Redis EventStore")
+                logger.info("Running in multi-pod mode with Redis EventStore")
                 app = mcp_instance.http_app(
                     transport="streamable-http",
                     event_store=event_store,
@@ -943,7 +943,7 @@ def run_server(
                 uvicorn.run(app, host=host, port=port)
             else:
                 # Single-pod mode: Use built-in run() with in-memory sessions
-                logging.info("Running in single-pod mode with in-memory sessions")
+                logger.info("Running in single-pod mode with in-memory sessions")
                 mcp_instance.run(
                     transport="streamable-http",
                     host=host,
@@ -952,10 +952,10 @@ def run_server(
                     middleware=starlette_middleware,
                 )
         except Exception as e:
-            logging.error("FastMCP failed: %s", e)
+            logger.error("FastMCP failed: %s", e)
             os.environ.pop(env_key, None)
     else:
-        logging.info("FastMCP already running on %s:%s", host, port)
+        logger.info("FastMCP already running on %s:%s", host, port)
 
 
 if __name__ == "__main__":
