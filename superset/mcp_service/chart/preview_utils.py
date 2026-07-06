@@ -309,7 +309,7 @@ def _generate_safe_ascii_bar_chart(data: List[Dict[str, Any]]) -> str:
         label = None
         value = None
 
-        for _, val in row.items():
+        for val in row.values():
             if isinstance(val, (int, float)) and not _is_nan(val) and value is None:
                 value = val
             elif isinstance(val, str) and label is None:
@@ -359,7 +359,7 @@ def _extract_numeric_values_safe(data: List[Dict[str, Any]]) -> List[float]:
     """Extract numeric values safely from data."""
     values = []
     for row in data[:20]:
-        for _, val in row.items():
+        for val in row.values():
             if isinstance(val, (int, float)) and not _is_nan(val):
                 values.append(val)
                 break
@@ -418,7 +418,7 @@ def _generate_safe_ascii_pie_chart(data: List[Dict[str, Any]]) -> str:
         label = None
         value = None
 
-        for _, val in row.items():
+        for val in row.values():
             if isinstance(val, (int, float)) and not _is_nan(val) and value is None:
                 value = val
             elif isinstance(val, str) and label is None:

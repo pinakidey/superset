@@ -462,14 +462,14 @@ def print_report(reports: list[MetadataReport], verbose: bool = False) -> None: 
                 field_counts[field] += 1
 
     print("\nRequired fields:")
-    for field, _desc in REQUIRED_FIELDS.items():
+    for field in REQUIRED_FIELDS:
         count = field_counts[field]
         pct = count * 100 // total
         bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
         print(f"  {field:25} {bar} {count:3}/{total} ({pct}%)")
 
     print("\nRecommended fields:")
-    for field, _desc in RECOMMENDED_FIELDS.items():
+    for field in RECOMMENDED_FIELDS:
         count = field_counts[field]
         pct = count * 100 // total
         bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
@@ -477,7 +477,7 @@ def print_report(reports: list[MetadataReport], verbose: bool = False) -> None: 
 
     if verbose:
         print("\nOptional fields:")
-        for field, _desc in OPTIONAL_FIELDS.items():
+        for field in OPTIONAL_FIELDS:
             count = field_counts[field]
             pct = count * 100 // total
             bar = "█" * (pct // 5) + "░" * (20 - pct // 5)

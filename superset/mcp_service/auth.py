@@ -1065,7 +1065,7 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
     # Set __signature__ from the original function, removing ctx parameter
     # since FastMCP tools don't expose it to clients.
     new_params = []
-    for _name, param in _tool_sig.parameters.items():
+    for param in _tool_sig.parameters.values():
         # Skip ctx parameter - FastMCP tools don't expose it to clients
         if param.annotation is FMContext or (
             hasattr(param.annotation, "__name__")
