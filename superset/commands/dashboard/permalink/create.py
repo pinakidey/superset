@@ -94,7 +94,8 @@ class CreateDashboardPermalinkCommand(BaseDashboardPermalinkCommand):
 
         if entry:
             # Return existing entry
-            assert entry.id  # for type checks
+            if entry.id is None:
+                raise DashboardPermalinkCreateFailedError()
             return encode_permalink_key(key=entry.id, salt=self.salt)
 
         # Create new entry with current algorithm
@@ -105,7 +106,8 @@ class CreateDashboardPermalinkCommand(BaseDashboardPermalinkCommand):
             codec=self.codec,
         )
         db.session.flush()
-        assert entry.id  # for type checks
+        if entry.id is None:
+            raise DashboardPermalinkCreateFailedError()
         return encode_permalink_key(key=entry.id, salt=self.salt)
 
     def validate(self) -> None:

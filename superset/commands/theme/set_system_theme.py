@@ -38,7 +38,8 @@ class SetSystemDefaultThemeCommand(BaseCommand):
     @transaction(on_error=partial(on_error, reraise=Exception))
     def run(self) -> Theme:
         self.validate()
-        assert self._theme
+        if self._theme is None:
+            raise ThemeNotFoundError()
 
         # Clear all existing system defaults in a single query
         db.session.execute(
@@ -69,7 +70,8 @@ class SetSystemDarkThemeCommand(BaseCommand):
     @transaction(on_error=partial(on_error, reraise=Exception))
     def run(self) -> Theme:
         self.validate()
-        assert self._theme
+        if self._theme is None:
+            raise ThemeNotFoundError()
 
         # Clear all existing system dark themes in a single query
         db.session.execute(

@@ -94,7 +94,18 @@ class StreamingSqlResultExportCommand(BaseStreamingCSVExportCommand):
         Returns:
             Tuple of (sql_query, database_object, catalog, schema)
         """
-        assert self._query is not None
+        if self._query is None:
+            raise SupersetErrorException(
+                SupersetError(
+                    message=__(
+                        "The query associated with these results could not be found. "
+                        "You need to re-run the original query."
+                    ),
+                    error_type=SupersetErrorType.RESULTS_BACKEND_ERROR,
+                    level=ErrorLevel.ERROR,
+                ),
+                status=404,
+            )
 
         select_sql = self._query.select_sql
         executed_sql = self._query.executed_sql
@@ -114,7 +125,18 @@ class StreamingSqlResultExportCommand(BaseStreamingCSVExportCommand):
         Returns:
             Adjusted row limit or None for unlimited
         """
-        assert self._query is not None
+        if self._query is None:
+            raise SupersetErrorException(
+                SupersetError(
+                    message=__(
+                        "The query associated with these results could not be found. "
+                        "You need to re-run the original query."
+                    ),
+                    error_type=SupersetErrorType.RESULTS_BACKEND_ERROR,
+                    level=ErrorLevel.ERROR,
+                ),
+                status=404,
+            )
 
         select_sql = self._query.select_sql
         executed_sql = self._query.executed_sql
