@@ -337,7 +337,7 @@ class Dashboard(CoreDashboard, SoftDeleteMixin, AuditMixinNullable, ImportExport
 
         result: list[tuple[BaseDatasource, dict[str, Any]]] = []
 
-        for _, slices in slices_by_datasource.items():
+        for slices in slices_by_datasource.values():
             # Use the eagerly-loaded datasource from any slice in the group
             datasource = next(iter(slices)).datasource
 

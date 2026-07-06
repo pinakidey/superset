@@ -78,7 +78,7 @@ def _generate_ascii_bar_chart(data: list[Any], width: int, height: int) -> str:
             numeric_val = None
             label_val = None
 
-            for _key, val in row.items():
+            for val in row.values():
                 if (
                     isinstance(val, (int, float))
                     and not isinstance(val, bool)

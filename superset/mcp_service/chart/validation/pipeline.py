@@ -338,7 +338,7 @@ class ValidationPipeline:
             column_filters[col].append(f)
 
         # Check for contradictions within same column
-        for _col, col_filters in column_filters.items():
+        for col_filters in column_filters.values():
             # Check for > X AND < Y where X >= Y
             gt_values = [f.value for f in col_filters if f.op == ">"]
             lt_values = [f.value for f in col_filters if f.op == "<"]

@@ -514,7 +514,7 @@ def add_tag_definitions(spec: dict[str, Any]) -> int:
     """Add tag definitions with descriptions to the OpenAPI spec."""
     # Collect all unique tags used in operations
     used_tags: set[str] = set()
-    for _path, methods in spec.get("paths", {}).items():
+    for methods in spec.get("paths", {}).values():
         for method, details in methods.items():
             if method not in ["get", "post", "put", "delete", "patch"]:
                 continue
@@ -675,7 +675,7 @@ def add_response_examples(spec: dict[str, Any]) -> int:  # noqa: C901
                 count += 1
 
     # Now add examples to inline response schemas in operations
-    for _path, methods in spec.get("paths", {}).items():
+    for methods in spec.get("paths", {}).values():
         for method, details in methods.items():
             if method not in ["get", "post", "put", "delete", "patch"]:
                 continue
@@ -683,7 +683,7 @@ def add_response_examples(spec: dict[str, Any]) -> int:  # noqa: C901
                 continue
 
             responses_dict = details.get("responses", {})
-            for _status_code, response in responses_dict.items():
+            for response in responses_dict.values():
                 # Skip $ref responses (already handled above)
                 if "$ref" in response:
                     continue
@@ -712,7 +712,7 @@ def add_request_body_examples(spec: dict[str, Any]) -> int:
     """Add example values to API request bodies for better documentation."""
     count = 0
 
-    for _path, methods in spec.get("paths", {}).items():
+    for methods in spec.get("paths", {}).values():
         for method, details in methods.items():
             if method not in ["post", "put", "patch"]:
                 continue
