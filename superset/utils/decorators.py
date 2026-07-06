@@ -150,9 +150,7 @@ def stats_timing(stats_key: str, stats_logger: BaseStatsLogger) -> Iterator[floa
 
 def arghash(args: Any, kwargs: Any) -> int:
     """Simple argument hash with kwargs sorted."""
-    sorted_args = tuple(
-        x if hasattr(x, "__repr__") else x for x in [*args, *sorted(kwargs.items())]
-    )
+    sorted_args = (*args, *sorted(kwargs.items()))
     return hash(sorted_args)
 
 
