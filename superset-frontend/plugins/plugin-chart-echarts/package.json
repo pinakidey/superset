@@ -37,7 +37,7 @@
     "@superset-ui/chart-controls": "*",
     "@superset-ui/core": "*",
     "dayjs": "^1.11.21",
-    "echarts": "*",
+    "echarts": "^6.1.0",
     "memoize-one": "*",
     "react": "^18.3.0"
   },
