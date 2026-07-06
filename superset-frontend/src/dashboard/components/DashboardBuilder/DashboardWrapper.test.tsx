@@ -38,6 +38,5 @@ test('should render children', () => {
   expect(getByTestId('mock-children')).toBeInTheDocument();
 });
 
-// Note: Drag-and-drop test removed - DashboardWrapper uses react-dnd but
-// OptionControlLabel uses @dnd-kit, causing cross-library compatibility issues.
-// This test requires proper @dnd-kit testing utilities.
+// Note: Drag-and-drop class toggling is driven by DashboardDndContext,
+// which is tested via integration tests with @dnd-kit utilities.

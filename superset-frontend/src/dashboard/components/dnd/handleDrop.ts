@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DropTargetMonitor } from 'react-dnd';
 import getDropPosition, {
   clearDropCache,
   DROP_FORBIDDEN,
@@ -27,16 +26,22 @@ import type {
   DropResult,
 } from './dragDroppableConfig';
 
+interface ClientOffset {
+  x: number;
+  y: number;
+}
+
 export default function handleDrop(
   props: DragDroppableComponent['props'],
-  monitor: DropTargetMonitor,
+  clientOffset: ClientOffset | null,
+  draggingItem: DragItem,
   Component: DragDroppableComponent,
 ): DropResult | undefined {
   // this may happen due to throttling
   if (!Component.mounted) return undefined;
 
   Component.setState(() => ({ dropIndicator: null }));
-  const dropPosition = getDropPosition(monitor, Component);
+  const dropPosition = getDropPosition(clientOffset, draggingItem, Component);
 
   if (!dropPosition || dropPosition === DROP_FORBIDDEN) {
     return undefined;
@@ -49,8 +54,6 @@ export default function handleDrop(
     onDrop,
     dropToChild,
   } = Component.props;
-
-  const draggingItem = monitor.getItem() as DragItem;
 
   const dropResult: DropResult = {
     source: {

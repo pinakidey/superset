@@ -129,7 +129,8 @@ const MarkdownStyles = styled.div`
 `;
 
 interface DragChildProps {
-  dragSourceRef: React.RefCallback<HTMLElement>;
+  dragSourceRef?: (node: HTMLElement | null) => void;
+  dragListeners?: React.HTMLAttributes<HTMLElement>;
 }
 
 function Markdown({
@@ -389,7 +390,7 @@ function Markdown({
       disableDragDrop={isFocused}
       editMode={editMode}
     >
-      {({ dragSourceRef }: DragChildProps) => (
+      {({ dragSourceRef, dragListeners }: DragChildProps) => (
         <WithPopoverMenu
           onChangeFocus={handleChangeFocus}
           shouldFocus={shouldFocusMarkdown}
@@ -422,6 +423,7 @@ function Markdown({
             >
               <div
                 ref={dragSourceRef}
+                {...dragListeners}
                 className="dashboard-component dashboard-component-chart-holder"
                 data-test="dashboard-component-chart-holder"
               >

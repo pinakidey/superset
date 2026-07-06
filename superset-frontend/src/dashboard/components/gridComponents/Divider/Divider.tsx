@@ -22,7 +22,7 @@ import { css, styled } from '@apache-superset/core/theme';
 import { Draggable } from '../../dnd/DragDroppable';
 import HoverMenu from '../../menu/HoverMenu';
 import DeleteComponentButton from '../../DeleteComponentButton';
-import type { ConnectDragSource } from 'react-dnd';
+import type { HTMLAttributes } from 'react';
 import type { LayoutItem } from 'src/dashboard/types';
 
 export interface DividerProps {
@@ -87,8 +87,8 @@ function Divider({
       onDrop={handleComponentDrop}
       editMode={editMode}
     >
-      {({ dragSourceRef }: { dragSourceRef: ConnectDragSource }) => (
-        <div ref={dragSourceRef}>
+      {({ dragSourceRef, dragListeners }) => (
+        <div ref={dragSourceRef} {...dragListeners}>
           {editMode && (
             <HoverMenu position="left">
               <DeleteComponentButton onDelete={handleDeleteComponent} />

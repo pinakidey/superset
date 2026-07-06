@@ -16,14 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { RefObject, ReactNode, useCallback, memo } from 'react';
+import { Ref, ReactNode, HTMLAttributes, useCallback, memo } from 'react';
 
 import { styled } from '@apache-superset/core/theme';
 import cx from 'classnames';
 
 interface HoverMenuProps {
   position?: 'left' | 'top';
-  innerRef?: RefObject<HTMLDivElement> | null;
+  innerRef?: Ref<HTMLDivElement> | null;
+  dragListeners?: HTMLAttributes<HTMLElement>;
   children?: ReactNode;
   onHover?: (data: { isHovered: boolean }) => void;
 }
@@ -68,6 +69,7 @@ const HoverStyleOverrides = styled.div`
 function HoverMenu({
   position = 'left',
   innerRef = null,
+  dragListeners,
   children = null,
   onHover,
 }: HoverMenuProps) {
@@ -95,6 +97,7 @@ function HoverMenu({
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         data-test="hover-menu"
+        {...dragListeners}
       >
         {children}
       </div>

@@ -231,10 +231,12 @@ function Header({
     >
       {({
         dragSourceRef,
+        dragListeners,
       }: {
-        dragSourceRef: React.Ref<HTMLDivElement> | undefined;
+        dragSourceRef?: (node: HTMLElement | null) => void;
+        dragListeners?: React.HTMLAttributes<HTMLElement>;
       }) => (
-        <div ref={dragSourceRef}>
+        <div ref={dragSourceRef} {...dragListeners}>
           {editMode &&
             depth <= 2 && ( // drag handle looks bad when nested
               <HoverMenu position="left">

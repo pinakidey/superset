@@ -114,7 +114,8 @@ const CloseIconWithDropIndicator = (
 );
 
 interface DraggableChildProps {
-  dragSourceRef: React.RefObject<HTMLDivElement>;
+  dragSourceRef?: (node: HTMLElement | null) => void;
+  dragListeners?: React.HTMLAttributes<HTMLElement>;
 }
 
 const Tabs = (props: TabsProps): ReactElement => {
@@ -353,16 +354,10 @@ const Tabs = (props: TabsProps): ReactElement => {
   }, [props.deleteComponent, props.id, props.parentId]);
 
   const handleGetDropPosition = useCallback(
-    (dragObject: {
-      dropIndicator: string | null;
-      isDraggingOver: boolean;
-      index: number;
-    }) => {
-      const { isDraggingOver, index } = dragObject;
-
-      if (isDraggingOver) {
-        setDropPosition(dragObject.dropIndicator);
-        setDragOverTabIndex(index);
+    (dropIndicator: string | null, tabIndex: number) => {
+      if (dropIndicator) {
+        setDropPosition(dropIndicator);
+        setDragOverTabIndex(tabIndex);
       } else {
         setDropPosition(null);
       }
@@ -529,12 +524,16 @@ const Tabs = (props: TabsProps): ReactElement => {
   );
 
   const renderChild = useCallback(
-    ({ dragSourceRef: tabsDragSourceRef }: DraggableChildProps) => (
+    ({
+      dragSourceRef: tabsDragSourceRef,
+      dragListeners: tabsDragListeners,
+    }: DraggableChildProps) => (
       <TabsRenderer
         tabItems={tabItems}
         editMode={editMode}
         renderHoverMenu={renderHoverMenu}
         tabsDragSourceRef={tabsDragSourceRef}
+        tabsDragListeners={tabsDragListeners}
         handleDeleteComponent={handleDeleteComponent}
         tabsComponent={tabsComponent}
         activeKey={activeKey}

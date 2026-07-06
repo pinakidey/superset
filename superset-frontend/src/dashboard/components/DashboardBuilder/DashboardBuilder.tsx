@@ -527,7 +527,11 @@ const DashboardBuilder = () => {
   );
 
   const renderDraggableContent = useCallback(
-    ({ dropIndicatorProps }: { dropIndicatorProps: JsonObject }) => (
+    ({
+      dropIndicatorProps,
+    }: {
+      dropIndicatorProps?: Record<string, string>;
+    }) => (
       <div>
         {dropIndicatorProps && <div {...dropIndicatorProps} />}
         {!isReport &&
@@ -643,7 +647,7 @@ const DashboardBuilder = () => {
           data-test="top-level-tabs"
           className={cx(!topLevelTabs && editMode && 'empty-droptarget')}
           component={dashboardRoot}
-          parentComponent={null}
+          parentComponent={undefined}
           depth={DASHBOARD_ROOT_DEPTH}
           index={0}
           orientation="column"

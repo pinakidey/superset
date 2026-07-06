@@ -101,12 +101,11 @@ describe('TabsRenderer', () => {
   });
 
   test('shows hover menu in edit mode', () => {
-    const mockRef = { current: null };
     const editModeProps: TabsRendererProps = {
       ...mockProps,
       editMode: true,
       renderHoverMenu: true,
-      tabsDragSourceRef: mockRef,
+      tabsDragSourceRef: () => {},
     };
 
     render(<TabsRenderer {...editModeProps} />);
@@ -131,12 +130,11 @@ describe('TabsRenderer', () => {
   });
 
   test('hides hover menu when renderHoverMenu is false', () => {
-    const mockRef = { current: null };
     const noHoverMenuProps: TabsRendererProps = {
       ...mockProps,
       editMode: true,
       renderHoverMenu: false,
-      tabsDragSourceRef: mockRef,
+      tabsDragSourceRef: () => {},
     };
 
     render(<TabsRenderer {...noHoverMenuProps} />);

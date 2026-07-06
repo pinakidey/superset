@@ -17,26 +17,32 @@
  * under the License.
  */
 import { throttle } from 'lodash-es';
-import { DropTargetMonitor } from 'react-dnd';
 import { DASHBOARD_ROOT_TYPE } from 'src/dashboard/util/componentTypes';
 import getDropPosition from 'src/dashboard/util/getDropPosition';
 import type {
   DragDroppableProps,
   DragDroppableComponent,
+  DragItem,
 } from './dragDroppableConfig';
 import handleScroll from './handleScroll';
 
 const HOVER_THROTTLE_MS = 100;
 
+interface ClientOffset {
+  x: number;
+  y: number;
+}
+
 function handleHover(
   props: DragDroppableProps,
-  monitor: DropTargetMonitor,
+  clientOffset: ClientOffset | null,
+  draggingItem: DragItem,
   Component: DragDroppableComponent,
 ): void {
   // this may happen due to throttling
   if (!Component.mounted) return;
 
-  const dropPosition = getDropPosition(monitor, Component);
+  const dropPosition = getDropPosition(clientOffset, draggingItem, Component);
 
   const isDashboardRoot =
     Component?.props?.component?.type === DASHBOARD_ROOT_TYPE;
@@ -56,5 +62,4 @@ function handleHover(
   }));
 }
 
-// this is called very frequently by react-dnd
 export default throttle(handleHover, HOVER_THROTTLE_MS);

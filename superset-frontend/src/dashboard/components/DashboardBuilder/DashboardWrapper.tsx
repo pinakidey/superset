@@ -16,15 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FC, PropsWithChildren, useEffect, useState } from 'react';
+import { FC, PropsWithChildren } from 'react';
 
 import { css, styled } from '@apache-superset/core/theme';
-import { Constants } from '@superset-ui/core/components';
 import { RootState } from 'src/dashboard/types';
 import { useSelector } from 'react-redux';
-import { useDragDropManager } from 'react-dnd';
 import classNames from 'classnames';
-import { debounce } from 'lodash-es';
+import { useDashboardDrag } from 'src/dashboard/components/dnd/DashboardDndContext';
 
 const StyledDiv = styled.div`
   ${({ theme }) => css`
@@ -117,39 +115,12 @@ const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
   const editMode = useSelector<RootState, boolean>(
     state => state.dashboardState.editMode,
   );
-  const dragDropManager = useDragDropManager();
-  const [isDragged, setIsDragged] = useState(
-    dragDropManager.getMonitor().isDragging(),
-  );
-
-  useEffect(() => {
-    const monitor = dragDropManager.getMonitor();
-    const debouncedSetIsDragged = debounce(
-      setIsDragged,
-      Constants.FAST_DEBOUNCE,
-    );
-    const unsub = monitor.subscribeToStateChange(() => {
-      const isDragging = monitor.isDragging();
-      if (isDragging) {
-        // set a debounced function to prevent HTML5 drag source
-        // from interfering with the drop zone highlighting
-        debouncedSetIsDragged(true);
-      } else {
-        debouncedSetIsDragged.cancel();
-        setIsDragged(false);
-      }
-    });
-
-    return () => {
-      unsub();
-      debouncedSetIsDragged.cancel();
-    };
-  }, [dragDropManager]);
+  const { isDragging } = useDashboardDrag();
 
   return (
     <StyledDiv
       className={classNames({
-        'dragdroppable--dragging': editMode && isDragged,
+        'dragdroppable--dragging': editMode && isDragging,
       })}
     >
       {children}
